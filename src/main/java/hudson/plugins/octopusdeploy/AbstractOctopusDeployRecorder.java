@@ -22,10 +22,8 @@ import net.sf.json.JSONObject;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.types.Commandline;
-import org.apache.xpath.operations.Bool;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
-
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
