@@ -13,6 +13,7 @@ import hudson.util.ComboBoxModel;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
+import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
@@ -38,7 +39,7 @@ import static com.google.common.base.Preconditions.checkState;
  * Deploy server access.
  * @author wbenayed
  */
-public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorder {
+public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorder implements SimpleBuildStep {
 
     /**
      * Cache for OctopusDeployServer instance used in deployment

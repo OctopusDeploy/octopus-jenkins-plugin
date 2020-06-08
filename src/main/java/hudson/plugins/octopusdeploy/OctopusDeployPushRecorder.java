@@ -33,7 +33,7 @@ import java.util.List;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuildStep implements SimpleBuildStep, Serializable {
+public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuildStep implements Serializable {
 
     private transient FileService fileService;
 
@@ -63,16 +63,18 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
     }
 
     @Override
-    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws InterruptedException, IOException {
+    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) {
         if (fileService == null)
         {
             Guice.createInjector(new ServiceModule()).injectMembers(this);
         }
 
         boolean success = true;
-        Log log = new Log(new BuildListenerAdapter(listener));
+        BuildListenerAdapter listenerAdapter = new BuildListenerAdapter(listener);
+        Log log = new Log(listenerAdapter);
         if (Result.FAILURE.equals(run.getResult())) {
             log.info("Not packaging the application due to job being in FAILED state.");
+            return;
         }
 
         EnvVars envVars;
@@ -81,7 +83,8 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
         } catch (Exception ex) {
             log.fatal(String.format("Failed to retrieve environment variables for this build '%s' - '%s'",
                     run.getParent().getName(), ex.getMessage()));
-            throw new InterruptedException();
+            run.setResult(Result.FAILURE);
+            return;
         }
         VariableResolver resolver =  new VariableResolver.ByMap<>(envVars);
 
@@ -125,7 +128,7 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
         try {
             final List<String> commands = buildCommands(envInjector, files, ws);
             final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
-            Result result = launchOcto(workspace.toComputer().getNode(), launcher, commands, masks, envVars, new BuildListenerAdapter(listener));
+            Result result = launchOcto(workspace.toComputer().getNode(), launcher, commands, masks, envVars, listenerAdapter);
             success = result.equals(Result.SUCCESS);
         } catch (Exception ex) {
             log.fatal("Failed to push the packages: " + ex.getMessage());
@@ -133,14 +136,9 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
         }
 
         if (!success) {
-            throw new InterruptedException();
+            run.setResult(Result.FAILURE);
         }
     }
-
-
-    //@Override
-    //public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
-    //}
 
     private List<String> buildCommands(final EnvironmentVariableValueInjector envInjector, final List<FilePath> files, FilePath workspace) throws IOException, InterruptedException {
         final List<String> commands = new ArrayList<>();
@@ -198,7 +196,7 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
 
 
     @Extension
-    @Symbol("octopuspushpackage")
+    @Symbol("octopusPushPackage")
     public static final class DescriptorImpl extends AbstractOctopusDeployDescriptorImplStep {
 
         @Override
