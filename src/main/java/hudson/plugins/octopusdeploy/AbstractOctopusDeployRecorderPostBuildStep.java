@@ -121,7 +121,7 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
     }
 
     /**
-     * The additional arguments to pass to octo.exe
+     * The additional arguments to pass to octo CLI
      */
     protected String additionalArgs;
     public String getAdditionalArgs() {
@@ -341,14 +341,14 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
 
                 exitCode = process.join();
 
-                log.info(String.format("Octo.exe exit code: %d", exitCode));
+                log.info(String.format("Octo CLI exit code: %d", exitCode));
 
             } catch (IOException e) {
-                final String message = "Error from Octo.exe: " + e.getMessage();
+                final String message = "Error from Octo CLI: " + e.getMessage();
                 log.error(message);
                 return Result.FAILURE;
             } catch (InterruptedException e) {
-                final String message = "Unable to wait for Octo.exe: " + e.getMessage();
+                final String message = "Unable to wait for Octo CLI: " + e.getMessage();
                 log.error(message);
                 return Result.FAILURE;
             }
