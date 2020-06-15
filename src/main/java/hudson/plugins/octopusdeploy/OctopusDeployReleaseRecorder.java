@@ -58,7 +58,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
     /**
      * Where are the release notes located?
      */
-    private final String releaseNotesSource;
+    private String releaseNotesSource;
     public String getReleaseNotesSource() {
         return releaseNotesSource;
     }
@@ -105,7 +105,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
     /**
      * All packages needed to create this new release.
      */
-    private final List<PackageConfiguration> packageConfigs;
+    private List<PackageConfiguration> packageConfigs;
     @Exported
     public List<PackageConfiguration> getPackageConfigs() {
         return packageConfigs;
@@ -121,14 +121,24 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
         return defaultPackageVersion;
     }
 
+    @DataBoundSetter
+    public void setReleaseNotesSource(String releaseNotesSource) {
+        this.releaseNotesSource = releaseNotesSource;
+    }
+
+    @DataBoundSetter
+    public void setPackageConfigs(List<PackageConfiguration> packageConfigs) {
+        this.packageConfigs = packageConfigs;
+    }
+
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
     public OctopusDeployReleaseRecorder(
             String serverId, String toolId, String spaceId, String project, String releaseVersion,
-            boolean releaseNotes, String releaseNotesSource, String releaseNotesFile,
+            boolean releaseNotes, String releaseNotesFile,
             boolean deployThisRelease, String environment, String tenant, String tenantTag, String channel, boolean waitForDeployment,
             String deploymentTimeout, boolean cancelOnTimeout,
-            List<PackageConfiguration> packageConfigs, boolean jenkinsUrlLinkback,
+            boolean jenkinsUrlLinkback,
             String defaultPackageVersion, boolean verboseLogging, String additionalArgs) {
 
         this.serverId = serverId.trim();
@@ -137,10 +147,8 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
         this.project = project.trim();
         this.releaseVersion = releaseVersion.trim();
         this.releaseNotes = releaseNotes;
-        this.releaseNotesSource = releaseNotesSource;
         this.releaseNotesFile = releaseNotesFile.trim();
         this.deployThisRelease = deployThisRelease;
-        this.packageConfigs = packageConfigs;
         this.environment = environment.trim();
         this.tenant = tenant == null ? null : tenant.trim();
         this.tenantTag = tenantTag == null ? null : tenantTag.trim();
