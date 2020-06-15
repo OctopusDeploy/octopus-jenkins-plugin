@@ -131,8 +131,13 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
         this.packageConfigs = packageConfigs;
     }
 
-    @DataBoundSetter void setAddtionalArgs(String addtionalArgs) {
+    @DataBoundSetter
+    public void setAdditionalArgs(String addtionalArgs) {
         this.additionalArgs = addtionalArgs == null ? null : addtionalArgs.trim();
+    }
+
+    public String getAdditionalArgs() {
+        return this.additionalArgs;
     }
 
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
@@ -324,7 +329,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
 
         try {
             final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
-            Result result = launchOcto(workspace.toComputer().getNode(), launcher, commands, masks, envVars, listenerAdapter);
+            Result result = launchOcto(workspace, launcher, commands, masks, envVars, listenerAdapter);
             success = result.equals(Result.SUCCESS);
             if (success) {
                 String serverUrl = getOctopusDeployServer(serverId).getUrl();

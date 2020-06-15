@@ -3,6 +3,7 @@ package hudson.plugins.octopusdeploy;
 import com.octopusdeploy.api.OctopusApi;
 import com.octopusdeploy.api.data.Space;
 import hudson.EnvVars;
+import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Proc;
 import hudson.model.*;
@@ -305,13 +306,13 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder imp
         return masks;
     }
 
-    public Result launchOcto(Node builtOn, Launcher launcher, List<String> commands, Boolean[] masks, EnvVars environment, BuildListener listener) {
+    public Result launchOcto(FilePath workspace, Launcher launcher, List<String> commands, Boolean[] masks, EnvVars environment, BuildListener listener) {
         Log log = new Log(listener);
         int exitCode = -1;
         final String octopusCli = this.getToolId();
 
         checkState(StringUtils.isNotBlank(octopusCli), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Octopus CLI"));
-
+        Node builtOn = workspace.toComputer().getNode();
         final String cliPath = getOctopusToolPath(octopusCli, builtOn, environment, launcher.getListener());
         if(StringUtils.isNotBlank(cliPath)) {
             final List<String> cmdArgs = new ArrayList<>();
@@ -333,7 +334,7 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder imp
                         .masks(ArrayUtils.toPrimitive(cmdMasks.toArray((Boolean[])Array.newInstance(Boolean.class, 0))))
                         .stdout(listener)
                         .envs(environment)
-                        .pwd(environment.get("WORKSPACE", ""))
+                        .pwd(workspace)
                         .start();
 
                 exitCode = process.join();

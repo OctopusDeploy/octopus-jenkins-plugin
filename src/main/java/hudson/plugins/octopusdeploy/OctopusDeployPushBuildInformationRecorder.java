@@ -55,6 +55,10 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
         this.additionalArgs = additionalArgs == null ? null : additionalArgs.trim();
     }
 
+    public String getAdditionalArgs() {
+        return this.additionalArgs;
+    }
+
     @DataBoundConstructor
     public OctopusDeployPushBuildInformationRecorder(String serverId, String spaceId, String toolId, String packageId,
                                                      String packageVersion, String commentParser, OverwriteMode overwriteMode,
@@ -98,7 +102,7 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
         try {
             final List<String> commands = buildCommands(run, envInjector, workspace);
             final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
-            Result result = launchOcto(workspace.toComputer().getNode(), launcher, commands, masks, envVars, listenerAdapter);
+            Result result = launchOcto(workspace, launcher, commands, masks, envVars, listenerAdapter);
             success = result.equals(Result.SUCCESS);
         } catch (Exception ex) {
             log.fatal("Failed to push the build information: " + ex.getMessage());

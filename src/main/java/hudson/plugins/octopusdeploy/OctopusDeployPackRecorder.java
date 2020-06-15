@@ -52,8 +52,12 @@ public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorderBuil
     public Boolean getOverwriteExisting() { return overwriteExisting; }
 
     @DataBoundSetter
-    public void setAddtionalArgs(String addtionalArgs) {
+    public void setAdditionalArgs(String addtionalArgs) {
         this.additionalArgs = addtionalArgs == null ? null : addtionalArgs.trim();
+    }
+
+    public String getAdditionalArgs() {
+        return this.additionalArgs;
     }
 
     @DataBoundConstructor
@@ -100,7 +104,8 @@ public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorderBuil
 
         try {
             final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
-            Result result = launchOcto(workspace.toComputer().getNode(), launcher, commands, masks, envVars, listenerAdapter);
+
+            Result result = launchOcto(workspace, launcher, commands, masks, envVars, listenerAdapter);
             success = result.equals(Result.SUCCESS);
         } catch (Exception ex) {
             log.fatal("Failed to package application: " + ex.getMessage());

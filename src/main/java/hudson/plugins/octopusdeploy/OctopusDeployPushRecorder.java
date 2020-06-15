@@ -49,6 +49,10 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
         this.additionalArgs = additionalArgs == null ? null : additionalArgs.trim();
     }
 
+    public String getAdditionalArgs() {
+        return this.additionalArgs;
+    }
+
     @Inject
     @DataBoundConstructor
     public OctopusDeployPushRecorder(String serverId, String spaceId, String toolId, String packagePaths,
@@ -133,7 +137,7 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
         try {
             final List<String> commands = buildCommands(envInjector, files, ws);
             final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
-            Result result = launchOcto(workspace.toComputer().getNode(), launcher, commands, masks, envVars, listenerAdapter);
+            Result result = launchOcto(workspace, launcher, commands, masks, envVars, listenerAdapter);
             success = result.equals(Result.SUCCESS);
         } catch (Exception ex) {
             log.fatal("Failed to push the packages: " + ex.getMessage());

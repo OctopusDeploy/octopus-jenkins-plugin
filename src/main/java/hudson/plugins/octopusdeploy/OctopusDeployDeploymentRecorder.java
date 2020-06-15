@@ -49,6 +49,10 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         this.additionalArgs = additionalArgs == null ? null : additionalArgs.trim();
     }
 
+    public String getAdditionalArgs() {
+        return this.additionalArgs;
+    }
+
     @DataBoundConstructor
     public OctopusDeployDeploymentRecorder(String serverId, String toolId, String spaceId, String project,
                                            String releaseVersion, String environment, String tenant, String tenantTag, String variables,
@@ -167,7 +171,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         if(success) {
             try {
                 final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
-                Result result = launchOcto(workspace.toComputer().getNode(), launcher, commands, masks, envVars, listenerAdapter);
+                Result result = launchOcto(workspace, launcher, commands, masks, envVars, listenerAdapter);
                 success = result.equals(Result.SUCCESS);
                 if(success) {
                     String serverUrl = getOctopusDeployServer(serverId).getUrl();
