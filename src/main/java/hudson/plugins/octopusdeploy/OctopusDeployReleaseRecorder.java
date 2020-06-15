@@ -131,6 +131,10 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
         this.packageConfigs = packageConfigs;
     }
 
+    @DataBoundSetter void setAddtionalArgs(String addtionalArgs) {
+        this.additionalArgs = addtionalArgs == null ? null : addtionalArgs.trim();
+    }
+
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
     public OctopusDeployReleaseRecorder(
@@ -139,7 +143,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
             boolean deployThisRelease, String environment, String tenant, String tenantTag, String channel, boolean waitForDeployment,
             String deploymentTimeout, boolean cancelOnTimeout,
             boolean jenkinsUrlLinkback,
-            String defaultPackageVersion, boolean verboseLogging, String additionalArgs) {
+            String defaultPackageVersion, boolean verboseLogging) {
 
         this.serverId = serverId.trim();
         this.toolId = toolId.trim();
@@ -159,7 +163,6 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
         this.releaseNotesJenkinsLinkback = jenkinsUrlLinkback;
         this.defaultPackageVersion = defaultPackageVersion;
         this.verboseLogging = verboseLogging;
-        this.additionalArgs = additionalArgs == null ? null : additionalArgs.trim();
     }
 
     @Override

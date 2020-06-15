@@ -44,11 +44,16 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         return releaseVersion;
     }
 
+    @DataBoundSetter
+    public void setAdditionalArgs(String additionalArgs) {
+        this.additionalArgs = additionalArgs == null ? null : additionalArgs.trim();
+    }
+
     @DataBoundConstructor
     public OctopusDeployDeploymentRecorder(String serverId, String toolId, String spaceId, String project,
                                            String releaseVersion, String environment, String tenant, String tenantTag, String variables,
                                            boolean waitForDeployment, String deploymentTimeout, boolean cancelOnTimeout,
-                                           boolean verboseLogging, String additionalArgs) {
+                                           boolean verboseLogging) {
         this.serverId = serverId.trim();
         this.toolId = toolId.trim();
         this.spaceId = spaceId.trim();
@@ -62,7 +67,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         this.deploymentTimeout = deploymentTimeout == null ? null : deploymentTimeout.trim();
         this.cancelOnTimeout = cancelOnTimeout;
         this.verboseLogging = verboseLogging;
-        this.additionalArgs = additionalArgs == null ? null : additionalArgs.trim();
+
     }
 
     @Override

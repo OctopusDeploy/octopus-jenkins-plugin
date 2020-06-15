@@ -21,6 +21,7 @@ import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -49,10 +50,15 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
     private final OverwriteMode overwriteMode;
     public OverwriteMode getOverwriteMode() { return overwriteMode; }
 
+    @DataBoundSetter
+    public void setAdditionalArgs(String additionalArgs) {
+        this.additionalArgs = additionalArgs == null ? null : additionalArgs.trim();
+    }
+
     @DataBoundConstructor
     public OctopusDeployPushBuildInformationRecorder(String serverId, String spaceId, String toolId, String packageId,
                                                      String packageVersion, String commentParser, OverwriteMode overwriteMode,
-                                                     Boolean verboseLogging, String additionalArgs) {
+                                                     Boolean verboseLogging) {
         this.serverId = serverId.trim();
         this.spaceId = spaceId.trim();
         this.toolId = toolId.trim();
@@ -61,7 +67,6 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
         this.commentParser = commentParser.trim();
         this.overwriteMode = overwriteMode;
         this.verboseLogging = verboseLogging;
-        this.additionalArgs = additionalArgs.trim();
     }
 
     @Override

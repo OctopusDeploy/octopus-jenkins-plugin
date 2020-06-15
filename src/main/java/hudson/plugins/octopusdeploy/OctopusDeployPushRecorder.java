@@ -20,6 +20,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.types.Commandline;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 import javax.annotation.Nonnull;
 import java.io.File;
@@ -43,17 +44,21 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
     private final OverwriteMode overwriteMode;
     public OverwriteMode getOverwriteMode() { return overwriteMode; }
 
+    @DataBoundSetter
+    public void setAdditionalArgs(String additionalArgs) {
+        this.additionalArgs = additionalArgs == null ? null : additionalArgs.trim();
+    }
+
     @Inject
     @DataBoundConstructor
     public OctopusDeployPushRecorder(String serverId, String spaceId, String toolId, String packagePaths,
-                                     OverwriteMode overwriteMode, Boolean verboseLogging, String additionalArgs) {
+                                     OverwriteMode overwriteMode, Boolean verboseLogging) {
         this.serverId = serverId.trim();
         this.spaceId = spaceId.trim();
         this.toolId = toolId.trim();
         this.packagePaths = packagePaths.trim();
         this.overwriteMode = overwriteMode;
         this.verboseLogging = verboseLogging;
-        this.additionalArgs = additionalArgs.trim();
     }
 
     @Inject

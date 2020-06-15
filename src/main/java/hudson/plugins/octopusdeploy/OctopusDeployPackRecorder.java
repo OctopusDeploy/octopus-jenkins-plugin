@@ -14,6 +14,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.types.Commandline;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
 import javax.annotation.Nonnull;
@@ -50,10 +51,15 @@ public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorderBuil
     private final Boolean overwriteExisting;
     public Boolean getOverwriteExisting() { return overwriteExisting; }
 
+    @DataBoundSetter
+    public void setAddtionalArgs(String addtionalArgs) {
+        this.additionalArgs = addtionalArgs == null ? null : addtionalArgs.trim();
+    }
+
     @DataBoundConstructor
     public OctopusDeployPackRecorder(String toolId, String packageId, String packageVersion, String packageFormat,
                                      String sourcePath, String includePaths, String outputPath,
-                                     Boolean overwriteExisting, Boolean verboseLogging, String additionalArgs) {
+                                     Boolean overwriteExisting, Boolean verboseLogging) {
         this.toolId = toolId.trim();
         this.packageId = packageId.trim();
         this.packageVersion = packageVersion.trim();
@@ -63,7 +69,6 @@ public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorderBuil
         this.outputPath = outputPath.trim();
         this.overwriteExisting = overwriteExisting;
         this.verboseLogging = verboseLogging;
-        this.additionalArgs = additionalArgs.trim();
     }
 
     @Override
