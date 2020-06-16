@@ -271,7 +271,13 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
             }
             else {
                 WorkflowRun workflowRun = (WorkflowRun) run;
-                changeSet = workflowRun.getChangeSets().get(0); //nocommit
+                List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets = workflowRun.getChangeSets();
+                if (changeSets.isEmpty()) {
+                    changeSet = ChangeLogSet.createEmpty(run);
+                }
+                else {
+                    changeSet = changeSets.get(0); //nocommit
+                }
             }
 
             for (Object item : changeSet.getItems()) {
