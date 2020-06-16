@@ -13,24 +13,20 @@ import hudson.scm.ChangeLogSet;
 import hudson.scm.SCM;
 import hudson.util.ListBoxModel;
 import hudson.util.VariableResolver;
-import jenkins.triggers.SCMTriggerItem;
 import jenkins.util.BuildListenerAdapter;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.types.Commandline;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.jetbrains.annotations.NotNull;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.Serializable;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -264,31 +260,30 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
     private List<Commit> convertChangeSetToCommits(Run<?,?> run) {
         List<Commit> commits = new ArrayList<>();
         if (run != null) {
-            ChangeLogSet<? extends ChangeLogSet.Entry> changeSet;
-            if (run instanceof AbstractBuild) {
-                AbstractBuild build = (AbstractBuild) run;
-                changeSet = build.getChangeSet();
-            }
-            else {
-                WorkflowRun workflowRun = (WorkflowRun) run;
-                List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets = workflowRun.getChangeSets();
-                if (changeSets.isEmpty()) {
-                    changeSet = ChangeLogSet.createEmpty(run);
-                }
-                else {
-                    changeSet = changeSets.get(0); //nocommit
-                }
-            }
+            List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets = getChangeSets(run);
 
-            for (Object item : changeSet.getItems()) {
-                ChangeLogSet.Entry entry = (ChangeLogSet.Entry) item;
-                final Commit commit = new Commit();
-                commit.Id = entry.getCommitId();
-                commit.Comment = entry.getMsg();
-                commits.add(commit);
-            }
+            for (ChangeLogSet<? extends ChangeLogSet.Entry> changeSet : changeSets)
+                for (Object item : changeSet.getItems()) {
+                    ChangeLogSet.Entry entry = (ChangeLogSet.Entry) item;
+                    final Commit commit = new Commit();
+                    commit.Id = entry.getCommitId();
+                    commit.Comment = entry.getMsg();
+                    commits.add(commit);
+                }
         }
         return commits;
+    }
+
+    @NotNull
+    private List<ChangeLogSet<? extends ChangeLogSet.Entry>> getChangeSets(Run<?, ?> run) {
+        if (run instanceof AbstractBuild) {
+            AbstractBuild build = (AbstractBuild) run;
+            return Collections.singletonList(build.getChangeSet());
+        }
+        else {
+            WorkflowRun workflowRun = (WorkflowRun) run;
+            return workflowRun.getChangeSets();
+        }
     }
 
     @Extension

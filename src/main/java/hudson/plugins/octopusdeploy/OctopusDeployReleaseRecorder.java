@@ -28,6 +28,7 @@ import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.remoting.RoleChecker;
+import org.jetbrains.annotations.NotNull;
 import org.kohsuke.stapler.*;
 import org.kohsuke.stapler.export.*;
 
@@ -554,29 +555,28 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
     private String convertChangeSetToString(Run<?, ?> run) {
         StringBuilder allChangeNotes = new StringBuilder();
         if (run != null) {
+            List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets = getChangeSets(run);
 
-            ChangeLogSet<? extends ChangeLogSet.Entry> changeSet;
-            if (run instanceof AbstractBuild) {
-                AbstractBuild build = (AbstractBuild) run;
-                changeSet = build.getChangeSet();
-            }
-            else {
-                WorkflowRun workflowRun = (WorkflowRun) run;
-                List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets = workflowRun.getChangeSets();
-                if (changeSets.isEmpty()) {
-                    changeSet = ChangeLogSet.createEmpty(run);
+            for (ChangeLogSet<? extends ChangeLogSet.Entry> changeSet : changeSets)
+                for (Object item : changeSet.getItems()) {
+                    ChangeLogSet.Entry entry = (ChangeLogSet.Entry) item;
+                    allChangeNotes.append(entry.getMsg()).append("\n");
                 }
-                else {
-                    changeSet = changeSets.get(0); //nocommit
-                }
-            }
 
-            for (Object item : changeSet.getItems()) {
-                ChangeLogSet.Entry entry = (ChangeLogSet.Entry) item;
-                allChangeNotes.append(entry.getMsg()).append("\n");
-            }
         }
         return allChangeNotes.toString();
+    }
+
+    @NotNull
+    private List<ChangeLogSet<? extends ChangeLogSet.Entry>> getChangeSets(Run<?, ?> run) {
+        if (run instanceof AbstractBuild) {
+            AbstractBuild build = (AbstractBuild) run;
+            return Collections.singletonList(build.getChangeSet());
+        }
+        else {
+            WorkflowRun workflowRun = (WorkflowRun) run;
+            return workflowRun.getChangeSets();
+        }
     }
 
     /**
