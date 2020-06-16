@@ -215,8 +215,11 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
         }
         else {
             WorkflowJob workflowJob = (WorkflowJob) job;
-            scm = workflowJob.getTypicalSCM(); //nocommit
+            scm = workflowJob.getTypicalSCM();
         }
+
+        if (scm == null)
+            return "Unknown";
 
         final String scmType = scm.getType().toLowerCase();
         if (scmType.contains("git")) {
