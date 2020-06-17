@@ -30,7 +30,7 @@ public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorderBuil
     private final String packageId;
     public String getPackageId() { return packageId; }
 
-    private final String packageVersion;
+    private String packageVersion;
     public String getPackageVersion() { return packageVersion; }
 
     private final String packageFormat;
@@ -42,37 +42,42 @@ public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorderBuil
     private final String sourcePath;
     public String getSourcePath() { return sourcePath; }
 
-    private final String includePaths;
+    private String includePaths;
     public String getIncludePaths() { return includePaths; }
 
     private final String outputPath;
     public String getOutputPath() { return outputPath; }
 
-    private final Boolean overwriteExisting;
+    private Boolean overwriteExisting;
     public Boolean getOverwriteExisting() { return overwriteExisting; }
 
     @DataBoundSetter
-    public void setAdditionalArgs(String addtionalArgs) {
-        this.additionalArgs = addtionalArgs == null ? null : addtionalArgs.trim();
+    public void setPackageVersion(String packageVersion) {
+        this.packageVersion = packageVersion == null ? null : packageVersion.trim();
     }
 
-    public String getAdditionalArgs() {
-        return this.additionalArgs;
+    @DataBoundSetter
+    public void setIncludePaths(String includePaths) {
+        this.includePaths = includePaths == null ? null : includePaths.trim();
+    }
+
+    @DataBoundSetter
+    public void setOverwriteExisting(Boolean overwriteExisting) {
+        this.overwriteExisting = overwriteExisting;
     }
 
     @DataBoundConstructor
-    public OctopusDeployPackRecorder(String toolId, String packageId, String packageVersion, String packageFormat,
-                                     String sourcePath, String includePaths, String outputPath,
-                                     Boolean overwriteExisting, Boolean verboseLogging) {
+    public OctopusDeployPackRecorder(String toolId, String packageId, String packageFormat,
+                                     String sourcePath, String outputPath) {
         this.toolId = toolId.trim();
         this.packageId = packageId.trim();
-        this.packageVersion = packageVersion.trim();
         this.packageFormat = packageFormat.trim();
         this.sourcePath = sourcePath.trim();
-        this.includePaths = includePaths.trim();
         this.outputPath = outputPath.trim();
-        this.overwriteExisting = overwriteExisting;
-        this.verboseLogging = verboseLogging;
+
+        this.includePaths = "**";
+        this.overwriteExisting = false;
+        this.verboseLogging = false;
     }
 
     @Override

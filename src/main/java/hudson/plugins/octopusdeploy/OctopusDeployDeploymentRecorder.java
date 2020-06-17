@@ -44,34 +44,18 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         return releaseVersion;
     }
 
-    @DataBoundSetter
-    public void setAdditionalArgs(String additionalArgs) {
-        this.additionalArgs = additionalArgs == null ? null : additionalArgs.trim();
-    }
-
-    public String getAdditionalArgs() {
-        return this.additionalArgs;
-    }
-
     @DataBoundConstructor
     public OctopusDeployDeploymentRecorder(String serverId, String toolId, String spaceId, String project,
-                                           String releaseVersion, String environment, String tenant, String tenantTag, String variables,
-                                           boolean waitForDeployment, String deploymentTimeout, boolean cancelOnTimeout,
-                                           boolean verboseLogging) {
+                                           String releaseVersion, String environment) {
         this.serverId = serverId.trim();
         this.toolId = toolId.trim();
         this.spaceId = spaceId.trim();
         this.project = project.trim();
         this.releaseVersion = releaseVersion.trim();
         this.environment = environment.trim();
-        this.tenant = tenant == null ? null : tenant.trim(); // Otherwise this can throw on plugin version upgrade
-        this.tenantTag = tenantTag == null ? null : tenantTag.trim();
-        this.variables = variables.trim();
-        this.waitForDeployment = waitForDeployment;
-        this.deploymentTimeout = deploymentTimeout == null ? null : deploymentTimeout.trim();
-        this.cancelOnTimeout = cancelOnTimeout;
-        this.verboseLogging = verboseLogging;
-
+        this.cancelOnTimeout = false;
+        this.waitForDeployment = false;
+        this.verboseLogging = false;
     }
 
     @Override
@@ -111,12 +95,14 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         checkState(StringUtils.isNotBlank(releaseVersion), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Version"));
 
         Properties properties = new Properties();
-        try {
-            properties.load(new StringReader(variables));
-        } catch (Exception ex) {
-            log.fatal(String.format("Unable to load entry variables: '%s'", ex.getMessage()));
-            run.setResult(Result.FAILURE);
-            return;
+        if (variables != null && !variables.isEmpty()) {
+            try {
+                properties.load(new StringReader(variables));
+            } catch (Exception ex) {
+                log.fatal(String.format("Unable to load entry variables: '%s'", ex.getMessage()));
+                run.setResult(Result.FAILURE);
+                return;
+            }
         }
 
         final List<String> commands = new ArrayList<>();

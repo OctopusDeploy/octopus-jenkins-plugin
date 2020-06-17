@@ -51,9 +51,14 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
     /**
      * Are there release notes for this release?
      */
-    private final boolean releaseNotes;
+    private boolean releaseNotes;
     public boolean getReleaseNotes() {
         return releaseNotes;
+    }
+
+    @DataBoundSetter
+    public void setReleaseNotes(boolean releaseNotes) {
+        this.releaseNotes = releaseNotes;
     }
 
     /**
@@ -72,7 +77,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
         return "scm".equals(releaseNotesSource);
     }
     
-    private final String channel;
+    private String channel;
     public String getChannel() {
         return channel;
     }
@@ -81,23 +86,34 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
      * Write a link back to the originating Jenkins build to the
      * Octopus release notes?
      */
-    private final boolean releaseNotesJenkinsLinkback;
+    private boolean releaseNotesJenkinsLinkback;
     public boolean getJenkinsUrlLinkback() {
         return releaseNotesJenkinsLinkback;
     }
 
+    @DataBoundSetter
+    public void setJenkinsUrlLinkback(boolean jenkinsUrlLinkback) {
+        this.releaseNotesJenkinsLinkback = jenkinsUrlLinkback;
+    }
+
+
     /**
      * The file that the release notes are in.
      */
-    private final String releaseNotesFile;
+    private String releaseNotesFile;
     public String getReleaseNotesFile() {
         return releaseNotesFile;
+    }
+
+    @DataBoundSetter
+    public void setReleaseNotesFile(String releaseNotesFile) {
+        this.releaseNotesFile = releaseNotesFile.trim();
     }
 
     /**
      * Should this release be deployed right after it is created?
      */
-    private final boolean deployThisRelease;
+    private boolean deployThisRelease;
     @Exported
     public boolean getDeployThisRelease() {
         return deployThisRelease;
@@ -116,10 +132,15 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
      * Default package version to use for required packages that are not
      * specified in the Package Configurations
      */
-    private final String defaultPackageVersion;
+    private String defaultPackageVersion;
     @Exported
     public String getDefaultPackageVersion() {
         return defaultPackageVersion;
+    }
+
+    @DataBoundSetter
+    public void setDefaultPackageVersion(String defaultPackageVersion) {
+        this.defaultPackageVersion = defaultPackageVersion;
     }
 
     @DataBoundSetter
@@ -141,34 +162,41 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
         return this.additionalArgs;
     }
 
+    @DataBoundSetter
+    public void setSpaceId(String spaceId) {
+        this.spaceId = spaceId == null ? null : spaceId.trim();
+    }
+
+    public String getSpaceId() {
+        return this.spaceId;
+    }
+
+    @DataBoundSetter
+    public void setChannel(String channel) {
+        this.channel = channel == null ? null : channel.trim();
+    }
+
+    @DataBoundSetter
+    public void setDeployThisRelease(boolean deployThisRelease) {
+        this.deployThisRelease = deployThisRelease;
+    }
+
+
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
-    public OctopusDeployReleaseRecorder(
-            String serverId, String toolId, String spaceId, String project, String releaseVersion,
-            boolean releaseNotes, String releaseNotesFile,
-            boolean deployThisRelease, String environment, String tenant, String tenantTag, String channel, boolean waitForDeployment,
-            String deploymentTimeout, boolean cancelOnTimeout,
-            boolean jenkinsUrlLinkback,
-            String defaultPackageVersion, boolean verboseLogging) {
+    public OctopusDeployReleaseRecorder(String serverId, String toolId, String project, String releaseVersion, String spaceId) {
 
         this.serverId = serverId.trim();
         this.toolId = toolId.trim();
-        this.spaceId = spaceId.trim();
         this.project = project.trim();
         this.releaseVersion = releaseVersion.trim();
-        this.releaseNotes = releaseNotes;
-        this.releaseNotesFile = releaseNotesFile.trim();
-        this.deployThisRelease = deployThisRelease;
-        this.environment = environment.trim();
-        this.tenant = tenant == null ? null : tenant.trim();
-        this.tenantTag = tenantTag == null ? null : tenantTag.trim();
-        this.channel = channel == null ? null : channel.trim();
-        this.waitForDeployment = waitForDeployment;
-        this.deploymentTimeout = deploymentTimeout == null ? null : deploymentTimeout.trim();
-        this.cancelOnTimeout = cancelOnTimeout;
-        this.releaseNotesJenkinsLinkback = jenkinsUrlLinkback;
-        this.defaultPackageVersion = defaultPackageVersion;
-        this.verboseLogging = verboseLogging;
+        this.spaceId = spaceId;
+
+        this.releaseNotes = false;
+        this.verboseLogging = false;
+        this.channel = "Default";
+        this.deployThisRelease = false;
+        this.cancelOnTimeout = false;
     }
 
     @Override
