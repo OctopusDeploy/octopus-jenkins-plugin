@@ -337,7 +337,7 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder {
 
                 exitCode = process.join();
 
-                log.info(String.format("Octo CLI exit code: %d", exitCode));
+                log.info(String.format("octo CLI exit code: %d", exitCode));
 
             } catch (IOException e) {
                 final String message = "Error from octo CLI: " + e.getMessage();
