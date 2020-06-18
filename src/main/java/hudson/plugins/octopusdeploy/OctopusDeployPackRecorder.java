@@ -45,8 +45,13 @@ public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorderBuil
     private String includePaths;
     public String getIncludePaths() { return includePaths; }
 
-    private final String outputPath;
+    private String outputPath;
     public String getOutputPath() { return outputPath; }
+
+    @DataBoundSetter
+    public void setOutputPath(String outputPath) {
+        this.outputPath = outputPath == null ? null : outputPath.trim();
+    }
 
     private Boolean overwriteExisting;
     public Boolean getOverwriteExisting() { return overwriteExisting; }
@@ -67,14 +72,13 @@ public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorderBuil
     }
 
     @DataBoundConstructor
-    public OctopusDeployPackRecorder(String toolId, String packageId, String packageFormat,
-                                     String sourcePath, String outputPath) {
+    public OctopusDeployPackRecorder(String toolId, String packageId, String packageFormat, String sourcePath) {
         this.toolId = toolId.trim();
         this.packageId = packageId.trim();
         this.packageFormat = packageFormat.trim();
         this.sourcePath = sourcePath.trim();
-        this.outputPath = outputPath.trim();
 
+        this.outputPath = ".";
         this.includePaths = "**";
         this.overwriteExisting = false;
         this.verboseLogging = false;
