@@ -33,6 +33,7 @@ import org.kohsuke.stapler.export.*;
 import javax.annotation.Nonnull;
 
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Strings.isNullOrEmpty;
 
 /**
  * Creates a release and optionally deploys it.
@@ -211,6 +212,12 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
 
         if (Result.FAILURE.equals(run.getResult())) {
             log.info("Not creating a release due to job being in FAILED state.");
+            return;
+        }
+
+        if (this.deployThisRelease && isNullOrEmpty(this.environment)) {
+            log.error("Must provide the environment when deploying the release.");
+            run.setResult(Result.FAILURE);
             return;
         }
 
