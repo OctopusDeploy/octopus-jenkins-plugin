@@ -359,6 +359,13 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
             }
         }
 
+        if (this.deployThisRelease) {
+            commands.addAll(getVariableCommands(run, envInjector, log, variables));
+            if (run.getResult() == Result.FAILURE) {
+                return;
+            }
+        }
+
         commands.addAll(getCommonCommandArguments(envInjector));
 
         try {
