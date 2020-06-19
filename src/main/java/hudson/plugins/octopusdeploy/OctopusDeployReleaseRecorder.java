@@ -20,9 +20,7 @@ import hudson.tasks.*;
 import hudson.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 
-import jenkins.model.lazy.LazyBuildMixIn;
 import jenkins.util.BuildListenerAdapter;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
@@ -366,7 +364,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
             return;
         }
 
-        commands.addAll(getCommonCommandArguments());
+        commands.addAll(getCommonCommandArguments(envInjector));
 
         try {
             final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
@@ -751,8 +749,8 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
          * @param spaceId The id of the space where to load this resource from
          * @return ListBoxModel
          */
-        public ListBoxModel doFillEnvironmentItems(@QueryParameter String serverId, @QueryParameter String spaceId) {
-            ListBoxModel names = new ListBoxModel();
+        public ComboBoxModel doFillEnvironmentItems(@QueryParameter String serverId, @QueryParameter String spaceId) {
+            ComboBoxModel names = new ComboBoxModel();
 
             if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
                 return names;
@@ -828,10 +826,10 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
          * Data binding that returns all possible project names to be used in the project autocomplete.
          * @param serverId The id of OctopusDeployServer in the configuration.
          * @param spaceId The id of the space where to load this resource from
-         * @return ListBoxModel
+         * @return ComboBoxModel
          */
-        public ListBoxModel doFillProjectItems(@QueryParameter String serverId, @QueryParameter String spaceId) {
-            ListBoxModel names = new ListBoxModel();
+        public ComboBoxModel doFillProjectItems(@QueryParameter String serverId, @QueryParameter String spaceId) {
+            ComboBoxModel names = new ComboBoxModel();
 
             if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
                 return names;
@@ -856,8 +854,8 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
          * @param spaceId The id of the space where to load this resource from
          * @return ComboBoxModel
          */
-        public ListBoxModel doFillChannelItems(@QueryParameter String project, @QueryParameter String serverId, @QueryParameter String spaceId) {
-            ListBoxModel names = new ListBoxModel();
+        public ComboBoxModel doFillChannelItems(@QueryParameter String project, @QueryParameter String serverId, @QueryParameter String spaceId) {
+            ComboBoxModel names = new ComboBoxModel();
 
             if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
                 return names;

@@ -18,7 +18,6 @@ import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.tools.ant.taskdefs.Parallel;
 import org.apache.tools.ant.types.Commandline;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -306,10 +305,10 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
         return variableCommands;
     }
 
-    List<String> getCommonCommandArguments() {
+    List<String> getCommonCommandArguments(EnvironmentVariableValueInjector envInjector) {
         List<String> commands = new ArrayList<>();
 
-        OctopusDeployServer server = getOctopusDeployServer(this.serverId);
+        OctopusDeployServer server = getOctopusDeployServer(envInjector.injectEnvironmentVariableValues(this.serverId));
         String serverUrl = server.getUrl();
         String apiKey = server.getApiKey().getPlainText();
         boolean ignoreSslErrors = server.getIgnoreSslErrors();
@@ -318,7 +317,7 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
         checkState(StringUtils.isNotBlank(apiKey), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "API Key"));
 
         commands.add(OctoConstants.Commands.Arguments.PROJECT_NAME);
-        commands.add(project);
+        commands.add(envInjector.injectEnvironmentVariableValues(project));
 
         commands.add(OctoConstants.Commands.Arguments.SERVER_URL);
         commands.add(serverUrl);
