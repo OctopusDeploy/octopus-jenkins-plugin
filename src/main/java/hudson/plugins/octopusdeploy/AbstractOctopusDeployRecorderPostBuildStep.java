@@ -1,5 +1,7 @@
 package hudson.plugins.octopusdeploy;
 
+import com.google.inject.Guice;
+import com.google.inject.Inject;
 import com.octopusdeploy.api.OctopusApi;
 import com.octopusdeploy.api.data.Space;
 import hudson.EnvVars;
@@ -8,6 +10,8 @@ import hudson.Launcher;
 import hudson.Proc;
 import hudson.model.*;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
+import hudson.plugins.octopusdeploy.services.OctoCliService;
+import hudson.plugins.octopusdeploy.services.ServiceModule;
 import hudson.plugins.octopusdeploy.utils.Lazy;
 import hudson.tasks.*;
 import hudson.util.ComboBoxModel;
@@ -31,6 +35,7 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static hudson.plugins.octopusdeploy.services.StringUtil.sanitizeValue;
 
@@ -195,6 +200,20 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
     @DataBoundSetter
     public void setCancelOnTimeout(boolean cancelOnTimeout) {
         this.cancelOnTimeout = cancelOnTimeout;
+    }
+
+    private OctoCliService octoCliService;
+    protected OctoCliService getOctoCliService() {
+        if (this.octoCliService == null) {
+            Guice.createInjector(new ServiceModule()).injectMembers(this);
+        }
+        return this.octoCliService;
+    }
+
+    @Inject
+    protected void setOctoCliService(OctoCliService octoCliService) {
+        checkNotNull(octoCliService, "octoCliService cannot be null");
+        this.octoCliService = octoCliService;
     }
 
     /**
@@ -362,63 +381,6 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
             }
         }
         return masks;
-    }
-
-    public Result launchOcto(FilePath workspace, Launcher launcher, List<String> commands, Boolean[] masks, EnvVars environment, BuildListener listener) {
-        Log log = new Log(listener);
-
-        int exitCode = -1;
-        final String octopusCli = this.getToolId();
-
-        checkState(StringUtils.isNotBlank(octopusCli), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Octopus CLI"));
-        Node builtOn = workspace.toComputer().getNode();
-        final String cliPath = getOctopusToolPath(octopusCli, builtOn, environment, launcher.getListener());
-        if(StringUtils.isNotBlank(cliPath)) {
-            final List<String> cmdArgs = new ArrayList<>();
-            final List<Boolean> cmdMasks = new ArrayList<>();
-
-            cmdArgs.add(cliPath);
-            cmdArgs.addAll(commands);
-
-            cmdMasks.add(Boolean.FALSE);
-            cmdMasks.addAll(Arrays.asList(masks));
-
-            Proc process = null;
-            try {
-                //environment.put("OCTOEXTENSION", getClass().getPackage().getImplementationVersion());
-                environment.put("OCTOEXTENSION", "");
-                process = launcher
-                        .launch()
-                        .cmds(cmdArgs)
-                        .masks(ArrayUtils.toPrimitive(cmdMasks.toArray((Boolean[])Array.newInstance(Boolean.class, 0))))
-                        .stdout(listener)
-                        .envs(environment)
-                        .pwd(workspace)
-                        .start();
-
-                exitCode = process.join();
-
-                log.info(String.format("Octopus CLI exit code: %d", exitCode));
-
-            } catch (IOException e) {
-                final String message = "Error from Octopus CLI: " + e.getMessage();
-                log.error(message);
-                return Result.FAILURE;
-            } catch (InterruptedException e) {
-                final String message = "Unable to wait for Octopus CLI: " + e.getMessage();
-                log.error(message);
-                return Result.FAILURE;
-            }
-
-            if(exitCode == 0)
-                return Result.SUCCESS;
-
-            log.error("Unable to create or deploy release. Please check the build log for details on the error.");
-            return Result.FAILURE;
-        }
-
-        log.error("OCTOPUS-JENKINS-INPUT-ERROR-0003: The path of \"" + cliPath + "\" for the selected Octopus CLI does not exist.");
-        return Result.FAILURE;
     }
 
     @Override

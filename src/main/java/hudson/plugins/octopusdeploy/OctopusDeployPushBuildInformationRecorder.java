@@ -108,7 +108,7 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
         try {
             final List<String> commands = buildCommands(run, envInjector, workspace);
             final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
-            Result result = launchOcto(workspace, launcher, commands, masks, envVars, listenerAdapter);
+            Result result = this.getOctoCliService().launchOcto(workspace, launcher, commands, masks, envVars, listenerAdapter, toolId);
             success = result.equals(Result.SUCCESS);
         } catch (Exception ex) {
             log.fatal("Failed to push the build information: " + ex.getMessage());
