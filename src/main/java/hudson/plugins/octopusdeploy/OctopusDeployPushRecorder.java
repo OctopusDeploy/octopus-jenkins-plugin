@@ -62,6 +62,7 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
         this.packagePaths = sanitizeValue(packagePaths);
         this.overwriteMode = overwriteMode;
         this.verboseLogging = false;
+        Guice.createInjector(new ServiceModule()).injectMembers(this);
     }
 
     @Inject
@@ -72,11 +73,6 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
 
     @Override
     public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) {
-        if (fileService == null || this.getOctoCliService() == null)
-        {
-            Guice.createInjector(new ServiceModule()).injectMembers(this);
-        }
-
         boolean success = true;
         BuildListenerAdapter listenerAdapter = new BuildListenerAdapter(listener);
         Log log = new Log(listenerAdapter);

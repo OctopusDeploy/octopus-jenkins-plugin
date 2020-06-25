@@ -1,6 +1,7 @@
 package hudson.plugins.octopusdeploy;
 
 import com.google.common.base.Splitter;
+import com.google.inject.Guice;
 import com.octopusdeploy.api.data.*;
 import com.octopusdeploy.api.*;
 import java.io.*;
@@ -14,6 +15,7 @@ import hudson.*;
 import hudson.FilePath.FileCallable;
 import hudson.model.*;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
+import hudson.plugins.octopusdeploy.services.ServiceModule;
 import hudson.remoting.VirtualChannel;
 import hudson.scm.*;
 import hudson.tasks.*;
@@ -193,6 +195,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
         this.channel = "Default";
         this.deployThisRelease = false;
         this.cancelOnTimeout = false;
+        Guice.createInjector(new ServiceModule()).injectMembers(this);
     }
 
     @Override
