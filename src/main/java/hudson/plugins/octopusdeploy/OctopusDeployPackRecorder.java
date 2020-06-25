@@ -1,27 +1,25 @@
 package hudson.plugins.octopusdeploy;
 
-import com.google.common.base.Splitter;
+import com.google.inject.Guice;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.*;
-import hudson.plugins.octopusdeploy.constants.OctoConstants;
+import hudson.plugins.octopusdeploy.commands.PackCommand;
+import hudson.plugins.octopusdeploy.commands.PackCommandParameters;
+import hudson.plugins.octopusdeploy.services.ServiceModule;
 import hudson.util.FormValidation;
-import hudson.util.VariableResolver;
 import jenkins.util.BuildListenerAdapter;
-import org.apache.commons.lang.StringUtils;
-import org.apache.tools.ant.types.Commandline;
 import org.jenkinsci.Symbol;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
 import javax.annotation.Nonnull;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hudson.plugins.octopusdeploy.services.StringUtil.sanitizeValue;
@@ -36,9 +34,6 @@ public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorderBuil
 
     private final String packageFormat;
     public String getPackageFormat() { return packageFormat; }
-
-    public boolean isZipPackageFormat() { return "zip".equals(packageFormat); }
-    public boolean isNuGetPackageFormat() { return "nuget".equals(packageFormat); }
 
     private final String sourcePath;
     public String getSourcePath() { return sourcePath; }
@@ -77,114 +72,33 @@ public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorderBuil
         this.includePaths = "**";
         this.overwriteExisting = false;
         this.verboseLogging = false;
+        Guice.createInjector(new ServiceModule()).injectMembers(this);
     }
 
     @Override
     public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) {
-        boolean success = true;
-        BuildListenerAdapter listenerAdapter = new BuildListenerAdapter(listener);
+        Log log = getLog(listener);
+        if (CheckForFailedTask(run, log)) return;
 
-        Log log = new Log(listenerAdapter);
-        if (Result.FAILURE.equals(run.getResult())) {
-            log.info("Not packaging the application due to job being in FAILED state.");
-            return;
-        }
+        EnvVars envVars = getEnvVars(run, listener, log);
+        if (envVars == null) return;
 
-        EnvVars envVars;
-        try {
-            envVars = run.getEnvironment(listener);
-        } catch (Exception ex) {
-            log.fatal(String.format("Failed to retrieve environment variables for this build '%s' - '%s'",
-                    run.getParent().getName(), ex.getMessage()));
-            run.setResult(Result.FAILURE);
-            return;
-        }
-        VariableResolver resolver =  new VariableResolver.ByMap<>(envVars);
-        EnvironmentVariableValueInjector envInjector = new EnvironmentVariableValueInjector(resolver, envVars);
-
-        //logStartHeader
-
-        final List<String> commands = buildCommands(envInjector);
-
-        try {
-            final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
-
-            Result result = this.getOctoCliService().launchOcto(workspace, launcher, commands, masks, envVars, listenerAdapter, toolId);
-            success = result.equals(Result.SUCCESS);
-        } catch (Exception ex) {
-            log.fatal("Failed to package application: " + ex.getMessage());
-            success = false;
-        }
-
-        if (!success) {
-            run.setResult(Result.FAILURE);
-        }
-    }
-
-    private List<String> buildCommands(final EnvironmentVariableValueInjector envInjector) {
-        final List<String> commands = new ArrayList<>();
-        String packageId = envInjector.injectEnvironmentVariableValues(this.packageId);
-        String packageVersion = envInjector.injectEnvironmentVariableValues(this.packageVersion);
-        String packageFormat = envInjector.injectEnvironmentVariableValues(this.packageFormat);
-        String sourcePath = envInjector.injectEnvironmentVariableValues(this.sourcePath);
-        String includePaths = envInjector.injectEnvironmentVariableValues(this.includePaths);
-        String outputPath = envInjector.injectEnvironmentVariableValues(this.outputPath);
-        Boolean overwriteExisting = this.overwriteExisting;
-        Boolean verboseLogging = this.verboseLogging;
-        String additionalArgs = envInjector.injectEnvironmentVariableValues(this.additionalArgs);
-
-        checkState(StringUtils.isNotBlank(packageId), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Package ID"));
-
-        commands.add("pack");
-
-        commands.add("--id");
-        commands.add(packageId);
-
-        if (StringUtils.isNotBlank(packageVersion)) {
-            commands.add("--version");
-            commands.add(packageVersion);
-        }
-
-        if (StringUtils.isNotBlank(packageFormat)) {
-            commands.add("--format");
-            commands.add(packageFormat);
-        }
-
-        if (StringUtils.isNotBlank(sourcePath)) {
-            commands.add("--basePath");
-            commands.add(sourcePath);
-        }
-
-        if (StringUtils.isNotBlank(includePaths)) {
-            final Iterable<String> includePathsSplit = Splitter.on("\n")
-                    .trimResults()
-                    .omitEmptyStrings()
-                    .split(includePaths);
-            for (final String include : includePathsSplit) {
-                commands.add("--include");
-                commands.add(include);
-            }
-        }
-
-        if (StringUtils.isNotBlank(outputPath)) {
-            commands.add("--outFolder");
-            commands.add(outputPath);
-        }
-
-        if (overwriteExisting) {
-            commands.add("--overwrite");
-        }
-
-        if (verboseLogging) {
-            commands.add("--verbose");
-        }
-
-        if(StringUtils.isNotBlank(additionalArgs)) {
-            final String[] myArgs = Commandline.translateCommandline(additionalArgs);
-            commands.addAll(Arrays.asList(myArgs));
-        }
-
-        return commands;
+        PackCommand command = new PackCommand(
+                new PackCommandParameters(
+                        this.getOctoCliService(),
+                        this.getToolId(),
+                        this.getPackageId(),
+                        this.getPackageFormat(),
+                        this.getSourcePath(),
+                        this.getPackageVersion(),
+                        this.getIncludePaths(),
+                        this.outputPath,
+                        this.additionalArgs,
+                        this.verboseLogging,
+                        this.overwriteExisting));
+        Result result = command.perform(workspace, launcher, listener, envVars);
+        run.setResult(result);
+        return;
     }
 
     @Extension
@@ -219,4 +133,7 @@ public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorderBuil
             return OctopusValidator.validateDirectory(outputPath);
         }
     }
+
+
+
 }

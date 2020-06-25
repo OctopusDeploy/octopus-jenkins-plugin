@@ -19,10 +19,13 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
+import jenkins.util.BuildListenerAdapter;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.types.Commandline;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
@@ -387,6 +390,35 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
     public BuildStepMonitor getRequiredMonitorService() {
         return BuildStepMonitor.NONE;
     }
+
+    @Nullable
+    protected EnvVars getEnvVars(@Nonnull Run<?, ?> run, @Nonnull TaskListener listener, Log log) {
+        EnvVars envVars;
+        try {
+            envVars = run.getEnvironment(listener);
+        } catch (Exception ex) {
+            log.fatal(String.format("Failed to retrieve environment variables for this build '%s' - '%s'",
+                    run.getParent().getName(), ex.getMessage()));
+            run.setResult(Result.FAILURE);
+            return null;
+        }
+        return envVars;
+    }
+
+    protected boolean CheckForFailedTask(@Nonnull Run<?, ?> run, Log log) {
+        if (Result.FAILURE.equals(run.getResult())) {
+            log.info("Not packaging the application due to job being in FAILED state.");
+            return true;
+        }
+        return false;
+    }
+
+    @NotNull
+    protected Log getLog(@Nonnull TaskListener listener) {
+        BuildListenerAdapter listenerAdapter = new BuildListenerAdapter(listener);
+        return new Log(listenerAdapter);
+    }
+
 
     public static abstract class AbstractOctopusDeployDescriptorImplPost extends BuildStepDescriptor<Publisher>
     {
