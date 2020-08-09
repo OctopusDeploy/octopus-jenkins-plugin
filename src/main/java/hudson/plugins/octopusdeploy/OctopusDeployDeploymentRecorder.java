@@ -1,6 +1,7 @@
 package hudson.plugins.octopusdeploy;
 
 import com.google.common.base.Splitter;
+import com.google.inject.Guice;
 import com.octopusdeploy.api.data.*;
 import com.octopusdeploy.api.*;
 import java.io.*;
@@ -11,6 +12,7 @@ import com.octopusdeploy.api.data.Project;
 import hudson.*;
 import hudson.model.*;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
+import hudson.plugins.octopusdeploy.services.ServiceModule;
 import hudson.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -51,6 +53,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         this.cancelOnTimeout = false;
         this.waitForDeployment = false;
         this.verboseLogging = false;
+        Guice.createInjector(new ServiceModule()).injectMembers(this);
     }
 
     @Override
@@ -140,7 +143,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         if(success) {
             try {
                 final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
-                Result result = launchOcto(workspace, launcher, commands, masks, envVars, listenerAdapter);
+                Result result = this.getOctoCliService().launchOcto(workspace, launcher, commands, masks, envVars, listenerAdapter, toolId);
                 success = result.equals(Result.SUCCESS);
                 if(success) {
                     String serverUrl = getOctopusDeployServer(serverId).getUrl();

@@ -62,6 +62,7 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
         this.packagePaths = sanitizeValue(packagePaths);
         this.overwriteMode = overwriteMode;
         this.verboseLogging = false;
+        Guice.createInjector(new ServiceModule()).injectMembers(this);
     }
 
     @Inject
@@ -72,11 +73,6 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
 
     @Override
     public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) {
-        if (fileService == null)
-        {
-            Guice.createInjector(new ServiceModule()).injectMembers(this);
-        }
-
         boolean success = true;
         BuildListenerAdapter listenerAdapter = new BuildListenerAdapter(listener);
         Log log = new Log(listenerAdapter);
@@ -136,7 +132,7 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
         try {
             final List<String> commands = buildCommands(envInjector, files, ws);
             final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
-            Result result = launchOcto(workspace, launcher, commands, masks, envVars, listenerAdapter);
+            Result result = this.getOctoCliService().launchOcto(workspace, launcher, commands, masks, envVars, listenerAdapter, toolId);
             success = result.equals(Result.SUCCESS);
         } catch (Exception ex) {
             log.fatal("Failed to push the packages: " + ex.getMessage());
