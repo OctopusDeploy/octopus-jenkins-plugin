@@ -125,7 +125,6 @@ public class ReleasesApi {
         }
         JSONObject json = (JSONObject)JSONSerializer.toJSON(response.getContent());
         JSONObject links = json.getJSONObject("Links");
-        // this one fails
         return links.getString("Web");
     }
 

@@ -408,7 +408,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
 
                     String deploymenturlSuffix = api.getDeploymentsApi().getPortalUrlForDeployment(fullProject.getId(), releaseVersion, fullEnvironment.getId(), tenantId);
 
-                    if (urlSuffix != null && !urlSuffix.isEmpty()) {
+                    if (deploymenturlSuffix != null && !deploymenturlSuffix.isEmpty()) {
                         String portalDeploymentUrl = serverUrl + deploymenturlSuffix;
                         log.info("Deployment executed: \n\t" + portalDeploymentUrl);
                         run.addAction(new BuildInfoSummary(BuildInfoSummary.OctopusDeployEventType.Deployment, portalDeploymentUrl));
