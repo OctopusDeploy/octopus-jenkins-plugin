@@ -1,35 +1,51 @@
 # OctopusDeploy Jenkins Plugin Developer Guide #
+
 This is a getting started guide for a developer who would like to contribute to the plugin, fix a bug, make an improvement, contributions from the community are welcome.
 
 ## Introduction ##
-The simplest way to get up and running is on a Linux OS, e.g. Ubuntu install some fundamental tools and applications and using IntelliJ spin up the repository.
 
+The following guide will briefly outline how to get started using an Ubuntu based OS, or using a recent version of Microsoft Windows
+
+This project is in the process of being migrated over to the Gradle build system, in the interim this guide will contain instructions for development using either Maven *or* Gradle
 
 # Fundamentals #
+
 ## Java 8 ##
 
-Currently the plugin is set to run on Java 8
+The plugin is set to run on Java 8
+
+### Ubuntu ###
 
 > sudo apt install openjdk-8-jdk
 
-## IntelliJ ##
+### Windows ###
 
-Download the Linux .tar.gz bundle from
-> JetBrains - https://www.jetbrains.com/idea/download/#section=linux
+1. Download [OpenJDK 8 LTS](https://adoptopenjdk.net/) and install to a location of your choosing
+2. Set the `JAVA_HOME` environment variable to the root directory of the JDK installation
+3. Ensure `%JAVA_HOME%\bin` is added to your path
 
-Extract and run the toolbox, or use the snap package
-> sudo snap install intellij-idea-ultimate --classic
+## Octo CLI ##
 
-## Install Octo CLI ##
-This is what the plugin uses to communicate with Octopus Deploy
+This is what the plugin uses to communicate with Octopus Deploy and will need to be installed for testing
+
+### Installing dotnet ###
+
+#### Ubuntu ####
 
 If you don’t have dotnet installed you can do:
 
 >  sudo snap install dotnet-sdk
 
+#### Windows ####
+
+[Download](https://dotnet.microsoft.com/download) and install the latest dotnet
+
+### Installing Octopus.DotNetCli ###
+
 You can install the Octopus.DotNetCli with:
 
 > dotnet tool install Octopus.DotNet.Cli --global
+
 
 # Running the Plugin #
 
@@ -37,9 +53,9 @@ The code is at, clone this repository locally with [Git](https://help.ubuntu.com
 
 > https://github.com/OctopusDeploy/octopus-jenkins-plugin
 
-## Configure IntelliJ Project ##
+## Configure using Maven and IntelliJ ##
 
-After cloning the repository open in in IntelliJ, there's some configuration required the first time before you can run it.
+After cloning the repository open in IntelliJ, there's some configuration required the first time before you can run it.
 
 1. Open the project in IntelliJ
 2. With the project selected in the project nav hit `F4`, select `Java 1.8`
@@ -67,13 +83,30 @@ After cloning the repository open in in IntelliJ, there's some configuration req
 ![localhost-8080](./developer-guide-images/localhost-8080.png)
 
 
-## IntelliJ Tips ##
+### IntelliJ Tips ###
 
 Select Autoscroll from Source, to help you see where files are as you navigate search
 
 ![intellij auto scroll to file](./developer-guide-images/autoscroll.png)
 
+## Configure using Gradle ##
 
+To run a Jenkins instance containing a version of the plugin built directly from local source you can execute the following command from the root of the project directory
+> gradlew server
+
+Once running the Jenkins instance will be available at `http://127.0.0.1:8080` by default
+
+### Using Intellij ###
+
+1. Import project into Intellij as a Gradle project
+2. Ensure the correct Java version is set
+3. Run the `server` task from the Gradle panel
+
+![gradle-panel](./developer-guide-images/gradle-panel.png)
+
+4. Once the server has been run once a *Run/Debug* configuration will be automatically added, or you can configure it manually as below
+
+![gradle-debug-config](./developer-guide-images/gradle-debug-config.png)
 
 # Releasing a new version #
 
