@@ -35,6 +35,9 @@ dependencies {
   implementation 'org.apache.commons:commons-collections4:4.2'
   implementation 'com.google.code.gson:gson:2.8.7'
   implementation 'org.jenkins-ci.plugins.workflow:workflow-job'
+
+  //Re-ading version here will make build work, however, dependency-management
+  //shouldn't require that.
   implementation 'com.octopus:octopus-sdk' //:0.0.2-SNAPSHOT'
   compileOnly 'org.jetbrains:annotations'
 }
@@ -58,28 +61,6 @@ jenkinsPlugin {
     }
   }
 }
-
-generateLicenseInfo {
-  configure {
-    println "I AM BEING CONFIGURED"
-//    dependencies {
-//      runtimeClasspathJenkins 'com.octopus:octopus-sdk'
-//    }
-  }
-
-  doFirst {
-    println "Repositories:"
-    project.repositories.each { println "Name: " + it.name + "; url: " + it.url }
-
-    println("Configurations:")
-    project.configurations.each { println "Config: " + it.name }
-  }
-}
-
-//afterEvaluate { project ->
-//  project.configurations(":runtimeClasspathJenkins").dependencies.add('com.octopus:octopus-sdk')
-//}
-
 
 spotless {
   groovyGradle {
