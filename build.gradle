@@ -21,10 +21,14 @@ java {
 }
 
 dependencies {
+  implementation libs.bundles.octopus
   implementation libs.apache.commons.collections4
   implementation libs.google.gson
   implementation libs.jenkins.workflow
   compileOnly libs.jetbrains.annotations
+  testImplementation libs.bundles.junit
+  testImplementation libs.assertj.core
+  testImplementation libs.mockito.inline
 }
 
 jenkinsPlugin {
@@ -46,6 +50,14 @@ jenkinsPlugin {
   }
 }
 
+configurations.all {
+  resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
+
+repositories {
+  maven { url "https://packages.octopushq.com/artifactory/maven" }
+}
+
 spotless {
   groovyGradle {
     target '**/*.gradle'
@@ -54,4 +66,8 @@ spotless {
     trimTrailingWhitespace()
     endWithNewline()
   }
+}
+
+test {
+  useJUnitPlatform()
 }
