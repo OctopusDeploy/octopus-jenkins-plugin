@@ -16,10 +16,8 @@ jobs:
         with:
           java-version: '8'
           distribution: 'adopt'
-      - name: Build with Gradle
-        run: ./gradlew build -x test
-      - name: Test with Gradle
-        run: ./gradlew test
+      - name: Build and test with Gradle
+        run: ./gradlew build
         env:
           OCTOPUS_LICENSE: ${{ secrets.OCTOPUS_LICENSE }}
           OCTOPUS_SDK_AT_USE_EXISTING_SERVER: false
