@@ -70,4 +70,8 @@ spotless {
 
 test {
   useJUnitPlatform()
+  testLogging {
+    showStandardStreams = true
+    exceptionFormat = 'full'
+  }
 }
