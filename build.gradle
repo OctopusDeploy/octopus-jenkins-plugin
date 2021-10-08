@@ -56,7 +56,6 @@ configurations.all {
 }
 
 repositories {
-  mavenLocal() // TODO (scl): Remove me!!!
   maven { url "https://packages.octopushq.com/artifactory/maven" }
 }
 
