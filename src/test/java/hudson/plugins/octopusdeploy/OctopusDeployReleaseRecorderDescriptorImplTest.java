@@ -3,14 +3,19 @@ package hudson.plugins.octopusdeploy;
 import com.octopus.helper.BaseRecorderTest;
 import com.octopus.sdk.domain.Project;
 import com.octopus.sdk.domain.ProjectGroup;
+import com.octopus.sdk.model.tag.TagResource;
+import com.octopus.sdk.model.tenant.TenantResource;
 import hudson.util.ComboBoxModel;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -21,7 +26,7 @@ class OctopusDeployReleaseRecorderDescriptorImplTest extends BaseRecorderTest {
             new OctopusDeployReleaseRecorder.DescriptorImpl();
 
     @Test
-    public void testDoCheckProject() {
+    public void doCheckProject() {
         final ProjectGroup projGroup = spaceScopedClient.createProjectGroup("ProjGroup1");
         spaceScopedClient.createProject("Proj1", projGroup.getProperties().getId());
 
@@ -33,7 +38,7 @@ class OctopusDeployReleaseRecorderDescriptorImplTest extends BaseRecorderTest {
     }
 
     @Test
-    public void testDoCheckChannel() {
+    public void doCheckChannel() {
         final ProjectGroup projGroup = spaceScopedClient.createProjectGroup("ProjGroup1");
         final Project project = spaceScopedClient.createProject("Proj1", projGroup.getProperties().getId());
         spaceScopedClient.createChannel("Channel1", project.getProperties().getId());
@@ -47,7 +52,7 @@ class OctopusDeployReleaseRecorderDescriptorImplTest extends BaseRecorderTest {
     }
 
     @Test
-    public void testDoCheckReleaseVersionWithNullProjectFailsValidation() {
+    public void doCheckReleaseVersionWithNullProjectFailsValidation() {
         FormValidation validation = descriptor.doCheckReleaseVersion("1.0.0",
                 null,
                 JENKINS_OCTOPUS_SERVER_ID,
@@ -58,7 +63,7 @@ class OctopusDeployReleaseRecorderDescriptorImplTest extends BaseRecorderTest {
     }
 
     @Test
-    public void testDoCheckReleaseVersionWithEmptyProjectFailsValidation() {
+    public void doCheckReleaseVersionWithEmptyProjectFailsValidation() {
         FormValidation validation =
                 descriptor.doCheckReleaseVersion("1.0.0",
                         "",
@@ -70,7 +75,7 @@ class OctopusDeployReleaseRecorderDescriptorImplTest extends BaseRecorderTest {
     }
 
     @Test
-    public void testDoCheckReleaseVersionWithoutCorrespondingProjectFailsValidation() {
+    public void doCheckReleaseVersionWithoutCorrespondingProjectFailsValidation() {
         FormValidation validation =
                 descriptor.doCheckReleaseVersion("1.0.0",
                         "Proj1",
@@ -83,7 +88,7 @@ class OctopusDeployReleaseRecorderDescriptorImplTest extends BaseRecorderTest {
     }
 
     @Test
-    public void testDoCheckReleaseVersion() {
+    public void doCheckReleaseVersion() {
         final ProjectGroup projGroup = spaceScopedClient.createProjectGroup("ProjGroup1");
         spaceScopedClient.createProject("Proj1", projGroup.getProperties().getId());
 
@@ -112,7 +117,7 @@ class OctopusDeployReleaseRecorderDescriptorImplTest extends BaseRecorderTest {
     }
 
     @Test
-    public void testDoCheckEnvironment() {
+    public void doCheckEnvironment() {
         spaceScopedClient.createEnvironment("Env1");
 
         final FormValidation validation = descriptor.doCheckEnvironment("Env1",
@@ -123,7 +128,7 @@ class OctopusDeployReleaseRecorderDescriptorImplTest extends BaseRecorderTest {
     }
 
     @Test
-    public void testDoFillEnvironmentItems() {
+    public void doFillEnvironmentItems() {
         List<String> environmentsToCreate = Arrays.asList("Env1", "Env2", "Env3");
         environmentsToCreate.forEach(name -> spaceScopedClient.createEnvironment(name));
 
@@ -134,37 +139,50 @@ class OctopusDeployReleaseRecorderDescriptorImplTest extends BaseRecorderTest {
         assertThat(model).containsAll(environmentsToCreate);
     }
 
-    // TODO (scl): Create tenant tags and enable test
     @Test
-    @Disabled
-    public void testDoFillTenantItems() {
+    public void doFillTenantItems() {
         List<String> tenantsToCreate = Arrays.asList("Tenant1", "Tenant2", "Tenant3");
-        // Create Tenants
+        tenantsToCreate.forEach(name -> spaceScopedClient.createTenant(name));
 
         final ListBoxModel model = descriptor.doFillTenantItems(JENKINS_OCTOPUS_SERVER_ID,
                 spaceScopedClient.getSpaceId());
 
         assertThat(model.size()).isEqualTo(tenantsToCreate.size());
-        assertThat(model).flatExtracting("name").containsAll(tenantsToCreate);
-        assertThat(model).flatExtracting("value").containsAll(tenantsToCreate);
+        assertThat(model).extracting("name").containsAll(tenantsToCreate);
+        assertThat(model).extracting("value").containsAll(tenantsToCreate);
     }
 
-    // TODO (scl): Create tenant tags and enable test
     @Test
-    @Disabled
-    public void testDoFillTenantTagItems() {
-        List<String> tenantTagsToCreate = Arrays.asList("Tenant1", "Tenant2", "Tenant3");
-        // Create Tenant Tags
+    public void doFillTenantTagItems() throws IOException {
+        List<String> tenantTagsToCreate = Arrays.asList("Tag1", "Tag2");
+        spaceScopedClient.createTagSet("TagSet");
+        tenantTagsToCreate.forEach(name ->
+                spaceScopedClient.createTagInTagSet(name, "#333333", "TagSet"));
+        final List<TagResource> tags =
+                Objects.requireNonNull(spaceScopedClient
+                                .getSpace()
+                                .tagSet()
+                                .getByName("TagSet")
+                                .orElse(null))
+                        .getProperties()
+                        .getTags();
+
+        TenantResource tenant = new TenantResource("Tenant1");
+        tenant.setTenantTags(new HashSet<>(tags
+                .stream()
+                .map(TagResource::getCanonicalTagName).collect(Collectors.toList())));
+        spaceScopedClient.getSpace().tenants().create(tenant);
 
         final ComboBoxModel model = descriptor.doFillTenantTagItems(JENKINS_OCTOPUS_SERVER_ID,
                 spaceScopedClient.getSpaceId());
 
         assertThat(model.size()).isEqualTo(tenantTagsToCreate.size());
-        assertThat(model).containsAll(tenantTagsToCreate);
+        assertThat(model)
+                .containsAll(tenantTagsToCreate.stream().map(tag -> "TagSet/" + tag).collect(Collectors.toList()));
     }
 
     @Test
-    public void testDoFillProjectItems() {
+    public void doFillProjectItems() {
         final ProjectGroup projGroup = spaceScopedClient.createProjectGroup("ProjGroup1");
         List<String> projectsToCreate = Arrays.asList("Proj1", "Proj2", "Proj3");
         projectsToCreate.forEach(name -> spaceScopedClient.createProject(name, projGroup.getProperties().getId()));
@@ -177,7 +195,7 @@ class OctopusDeployReleaseRecorderDescriptorImplTest extends BaseRecorderTest {
     }
 
     @Test
-    public void testDoFillChannelItems() {
+    public void doFillChannelItems() {
         final String projectName = "Proj1";
         final ProjectGroup projGroup = spaceScopedClient.createProjectGroup("ProjGroup1");
         final Project project = spaceScopedClient.createProject(projectName, projGroup.getProperties().getId());

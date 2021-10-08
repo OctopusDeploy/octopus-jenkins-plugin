@@ -27,16 +27,16 @@ public class TestHelper {
         return withoutBraces.substring(withoutBraces.length() - startIndex);
     }
 
-    public static SpaceScopedClient buildSpaceScopedClientForTesting(OkHttpClient httpClient,
-                                                                     OctopusDeployServer server,
-                                                                     String spaceName) {
+    public static SpaceScopedClient buildSpaceScopedClientForTesting(final OkHttpClient httpClient,
+                                                                     final OctopusDeployServer server,
+                                                                     final String spaceName) {
         try {
             final OctopusClient client = new OctopusClient(httpClient, new URL(server.getOctopusUrl()), server.getApiKey());
             final Set<String> spaceManagers = Sets.newHashSet(UserApi.create(client).getCurrentUser().getId());
             final Repository repository = new Repository(client);
 
-            Space space = repository.spaces().create(new SpaceOverviewWithLinks(spaceName, spaceManagers));
-            SpaceHome spaceHome = new SpaceHomeApi(client).getBySpaceOverview(space.getProperties());
+            final Space space = repository.spaces().create(new SpaceOverviewWithLinks(spaceName, spaceManagers));
+            final SpaceHome spaceHome = new SpaceHomeApi(client).getBySpaceOverview(space.getProperties());
 
             return new SpaceScopedClient(client, repository, space, spaceHome);
         } catch (IOException e) {
@@ -46,15 +46,13 @@ public class TestHelper {
     }
 
     public static void deleteTestingSpace(final SpaceScopedClient spaceScopedClient) {
-        if (spaceScopedClient.getRepository() != null && spaceScopedClient.getSpace() != null) {
-            final SpaceOverviewResource resource = spaceScopedClient.getSpace().getProperties();
-            resource.setTaskQueueStopped(true);
-            try {
-                spaceScopedClient.getRepository().spaces().update(resource);
-                spaceScopedClient.getRepository().spaces().delete(resource);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        final SpaceOverviewResource resource = spaceScopedClient.getSpace().getProperties();
+        resource.setTaskQueueStopped(true);
+        try {
+            spaceScopedClient.getRepository().spaces().update(resource);
+            spaceScopedClient.getRepository().spaces().delete(resource);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

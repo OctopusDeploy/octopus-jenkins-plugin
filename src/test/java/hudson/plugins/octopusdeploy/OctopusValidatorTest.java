@@ -8,6 +8,7 @@ import com.octopus.testsupport.BaseOctopusServerEnabledTest;
 import com.octopusdeploy.api.OctopusApi;
 import com.octopusdeploy.api.data.Project;
 import hudson.util.FormValidation;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.junit.jupiter.api.*;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -20,8 +21,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class OctopusValidatorTest extends BaseOctopusServerEnabledTest {
 
     private MockedStatic<AbstractOctopusDeployRecorderPostBuildStep> mockedPostBuildStep;
-    private SpaceScopedClient spaceScopedClient = null;
-    private OctopusValidator validator = null;
+    private SpaceScopedClient spaceScopedClient;
+    private OctopusValidator validator;
 
 
     @BeforeEach
@@ -47,36 +48,36 @@ class OctopusValidatorTest extends BaseOctopusServerEnabledTest {
     }
 
     @Test
-    public void testValidateProjectEmptyProjectFailsValidation() {
+    public void validateProjectEmptyProjectFailsValidation() {
         final FormValidation validation = validator.validateProject("");
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.ERROR);
-        assertThat(validation.getMessage()).isEqualTo("Please provide a project name.");
+        assertThat(StringEscapeUtils.unescapeHtml(validation.getMessage())).isEqualTo("Please provide a project name.");
     }
 
     @Test
-    public void testValidateProjectWithoutCorrespondingProjectFailsValidation() {
+    public void validateProjectWithoutCorrespondingProjectFailsValidation() {
         final FormValidation validation = validator.validateProject("Proj1");
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.WARNING);
-        assertThat(validation.getMessage())
-                .isEqualTo("Project &#039;Proj1&#039; doesn&#039;t exist. " +
+        assertThat(StringEscapeUtils.unescapeHtml(validation.getMessage()))
+                .isEqualTo("Project 'Proj1' doesn't exist. " +
                         "If this field is computed you can disregard this warning.");
     }
 
     @Test
-    public void testValidateProjectWithoutCorrespondingProjectNameCaseFailsValidation() {
+    public void validateProjectWithoutCorrespondingProjectNameCaseFailsValidation() {
         spaceScopedClient.createProject("Proj1", "ProjGroup1");
 
         final FormValidation validation = validator.validateProject("proj1");
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.WARNING);
-        assertThat(validation.getMessage())
-                .isEqualTo("Project name case does not match. Did you mean &#039;Proj1&#039;?");
+        assertThat(StringEscapeUtils.unescapeHtml(validation.getMessage()))
+                .isEqualTo("Project name case does not match. Did you mean 'Proj1'?");
     }
 
     @Test
-    public void testValidateProjectWithCorrespondingProjectNamePassesValidation() {
+    public void validateProjectWithCorrespondingProjectNamePassesValidation() {
         spaceScopedClient.createProject("Proj1", "ProjGroup1");
         final FormValidation validation = validator.validateProject("Proj1");
 
@@ -84,43 +85,43 @@ class OctopusValidatorTest extends BaseOctopusServerEnabledTest {
     }
 
     @Test
-    public void testValidateChannelEmptyChannelPassesValidation() {
+    public void validateChannelEmptyChannelPassesValidation() {
         final FormValidation validation = validator.validateChannel("", "Proj1");
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.OK);
     }
 
     @Test
-    public void testValidateChannelEmptyProjectFailsValidation() {
+    public void validateChannelEmptyProjectFailsValidation() {
         final FormValidation validation = validator.validateChannel("Channel1", "");
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.WARNING);
-        assertThat(validation.getMessage()).isEqualTo("Project must be set to validate this field.");
+        assertThat(StringEscapeUtils.unescapeHtml(validation.getMessage())).isEqualTo("Project must be set to validate this field.");
     }
 
     @Test
-    public void testValidateChannelWithoutCorrespondingProjectFailsValidation() {
+    public void validateChannelWithoutCorrespondingProjectFailsValidation() {
         final FormValidation validation = validator.validateChannel("Channel1", "Proj1");
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.WARNING);
-        assertThat(validation.getMessage())
-                .isEqualTo("Unable to validate channel because the project &#039;Proj1&#039; couldn&#039;t be found.");
+        assertThat(StringEscapeUtils.unescapeHtml(validation.getMessage()))
+                .isEqualTo("Unable to validate channel because the project 'Proj1' couldn't be found.");
     }
 
     @Test
-    public void testValidateChannelWithoutCorrespondingChannelFailsValidation() {
+    public void validateChannelWithoutCorrespondingChannelFailsValidation() {
         spaceScopedClient.createProject("Proj1", "ProjGroup1");
 
         final FormValidation validation = validator.validateChannel("Channel1", "Proj1");
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.WARNING);
-        assertThat(validation.getMessage())
-                .isEqualTo("Channel &#039;Channel1&#039; doesn&#039;t exist. " +
+        assertThat(StringEscapeUtils.unescapeHtml(validation.getMessage()))
+                .isEqualTo("Channel 'Channel1' doesn't exist. " +
                         "If this field is computed you can disregard this warning.");
     }
 
     @Test
-    public void testValidateChannelWithCorrespondingChannelAndProjectPassesValidation() {
+    public void validateChannelWithCorrespondingChannelAndProjectPassesValidation() {
         final com.octopus.sdk.domain.Project project =
                 spaceScopedClient.createProject("Proj1", "ProjGroup1");
         spaceScopedClient.createChannel("Channel1", project.getProperties().getId());
@@ -131,36 +132,36 @@ class OctopusValidatorTest extends BaseOctopusServerEnabledTest {
     }
 
     @Test
-    public void testValidateEnvironmentWithEmptyEnvironmentNameFailsValidation() {
+    public void validateEnvironmentWithEmptyEnvironmentNameFailsValidation() {
         final FormValidation validation = validator.validateEnvironment("");
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.ERROR);
-        assertThat(validation.getMessage()).isEqualTo("Please provide an environment name.");
+        assertThat(StringEscapeUtils.unescapeHtml(validation.getMessage())).isEqualTo("Please provide an environment name.");
     }
 
     @Test
-    public void testValidateEnvironmentWithoutEnvironmentsFailsValidation() {
+    public void validateEnvironmentWithoutEnvironmentsFailsValidation() {
         final FormValidation validation = validator.validateEnvironment("Env1");
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.WARNING);
-        assertThat(validation.getMessage())
-                .isEqualTo("Environment &#039;Env1&#039; doesn&#039;t exist. " +
+        assertThat(StringEscapeUtils.unescapeHtml(validation.getMessage()))
+                .isEqualTo("Environment 'Env1' doesn't exist. " +
                         "If this field is computed you can disregard this warning.");
     }
 
     @Test
-    public void testValidateEnvironmentWithUnmatchedEnvironmentFailsValidation() {
+    public void validateEnvironmentWithUnmatchedEnvironmentFailsValidation() {
         spaceScopedClient.createEnvironment("Env1");
 
         final FormValidation validation = validator.validateEnvironment("env1");
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.WARNING);
-        assertThat(validation.getMessage())
-                .isEqualTo("Environment name case does not match. Did you mean &#039;Env1&#039;?");
+        assertThat(StringEscapeUtils.unescapeHtml(validation.getMessage()))
+                .isEqualTo("Environment name case does not match. Did you mean 'Env1'?");
     }
 
     @Test
-    public void testDoCheckEnvironmentWithCorrespondingEnvironmentPassesValidation() {
+    public void validateEnvironmentWithCorrespondingEnvironmentPassesValidation() {
         spaceScopedClient.createEnvironment("Env1");
 
         final FormValidation validation = validator.validateEnvironment("Env1");
@@ -169,17 +170,17 @@ class OctopusValidatorTest extends BaseOctopusServerEnabledTest {
     }
 
     @Test
-    public void testValidateReleaseWithEmptyReleaseVersionFailsValidation() {
+    public void validateReleaseWithEmptyReleaseVersionFailsValidation() {
         final FormValidation validation = validator.validateRelease("",
                 new Project("id", "name"),
                 OctopusValidator.ReleaseExistenceRequirement.MustNotExist);
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.ERROR);
-        assertThat(validation.getMessage()).isEqualTo("Please provide a release version.");
+        assertThat(StringEscapeUtils.unescapeHtml(validation.getMessage())).isEqualTo("Please provide a release version.");
     }
 
     @Test
-    public void testValidateReleaseWhereReleaseMustExistFailsValidation() {
+    public void validateReleaseWhereReleaseMustExistFailsValidation() {
         final ProjectGroup projGroup = spaceScopedClient.createProjectGroup("ProjGroup1");
         final com.octopus.sdk.domain.Project newProject =
                 spaceScopedClient.createProject("Proj1", projGroup.getProperties().getId());
@@ -190,15 +191,15 @@ class OctopusValidatorTest extends BaseOctopusServerEnabledTest {
                 OctopusValidator.ReleaseExistenceRequirement.MustExist);
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.WARNING);
-        assertThat(validation.getMessage())
-                .isEqualTo("Release 1.0.0 doesn&#039;t exist for project &#039;Proj1&#039;. " +
+        assertThat(StringEscapeUtils.unescapeHtml(validation.getMessage()))
+                .isEqualTo("Release 1.0.0 doesn't exist for project 'Proj1'. " +
                         "If this field is computed you can disregard this warning.");
     }
 
     // TODO (scl): Create release and enable test
     @Test
     @Disabled
-    public void testValidateReleaseWhereReleaseMustExistPassesValidation() {
+    public void validateReleaseWhereReleaseMustExistPassesValidation() {
         final com.octopus.sdk.domain.Project newProject =
                 spaceScopedClient.createProject("Proj1", "ProjGroup1");
         // Create release for Proj1 with matching release version
@@ -214,7 +215,7 @@ class OctopusValidatorTest extends BaseOctopusServerEnabledTest {
     // TODO (scl): - Create release and enable test
     @Test
     @Disabled
-    public void testValidateReleaseWhereReleaseMustNotExistFailsValidation() {
+    public void validateReleaseWhereReleaseMustNotExistFailsValidation() {
         final com.octopus.sdk.domain.Project newProject =
                 spaceScopedClient.createProject("Proj1", "ProjGroup1");
         // Create release for Proj1 with matching release version
@@ -225,13 +226,13 @@ class OctopusValidatorTest extends BaseOctopusServerEnabledTest {
                 OctopusValidator.ReleaseExistenceRequirement.MustNotExist);
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.WARNING);
-        assertThat(validation.getMessage())
-                .isEqualTo("Release 1.0.0 doesn&#039;t exist for project &#039;Proj1&#039;. " +
+        assertThat(StringEscapeUtils.unescapeHtml(validation.getMessage()))
+                .isEqualTo("Release 1.0.0 doesn't exist for project 'Proj1'. " +
                         "If this field is computed you can disregard this warning.");
     }
 
     @Test
-    public void testValidateReleaseWhereReleaseMustNotExistPassesValidation() {
+    public void validateReleaseWhereReleaseMustNotExistPassesValidation() {
         final com.octopus.sdk.domain.Project newProject =
                 spaceScopedClient.createProject("Proj1", "ProjGroup1");
         final Project project = new Project(newProject.getProperties().getId(), newProject.getProperties().getName());
@@ -244,30 +245,30 @@ class OctopusValidatorTest extends BaseOctopusServerEnabledTest {
     }
 
     @Test
-    public void testValidateServerIdWithNullServerIdFailsValidation() {
+    public void validateServerIdWithNullServerIdFailsValidation() {
         final FormValidation validation = OctopusValidator.validateServerId(null);
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.ERROR);
-        assertThat(validation.getMessage()).isEqualTo("Please select an instance of Octopus Deploy.");
+        assertThat(StringEscapeUtils.unescapeHtml(validation.getMessage())).isEqualTo("Please select an instance of Octopus Deploy.");
     }
 
     @Test
-    public void testValidateServerIdWithEmptyServerIdFailsValidation() {
+    public void validateServerIdWithEmptyServerIdFailsValidation() {
         final FormValidation validation = OctopusValidator.validateServerId("");
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.ERROR);
-        assertThat(validation.getMessage()).isEqualTo("Please select an instance of Octopus Deploy.");
+        assertThat(StringEscapeUtils.unescapeHtml(validation.getMessage())).isEqualTo("Please select an instance of Octopus Deploy.");
     }
 
     @Test
-    public void testValidateServerIdWithDefaultServerIdPassesValidation() {
+    public void validateServerIdWithDefaultServerIdPassesValidation() {
         final FormValidation validation = OctopusValidator.validateServerId("default");
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.OK);
     }
 
     @Test
-    public void testValidateServerIdWithNoConfiguredServersFailsValidation() {
+    public void validateServerIdWithNoConfiguredServersFailsValidation() {
         mockedPostBuildStep
                 .when(AbstractOctopusDeployRecorderPostBuildStep::getOctopusDeployServersIds)
                 .thenReturn(Collections.EMPTY_LIST);
@@ -275,11 +276,11 @@ class OctopusValidatorTest extends BaseOctopusServerEnabledTest {
         final FormValidation validation = OctopusValidator.validateServerId("someId");
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.ERROR);
-        assertThat(validation.getMessage()).isEqualTo("There are no Octopus Deploy servers configured.");
+        assertThat(StringEscapeUtils.unescapeHtml(validation.getMessage())).isEqualTo("There are no Octopus Deploy servers configured.");
     }
 
     @Test
-    public void testValidateServerIdWithNoMatchingServersFailsValidation() {
+    public void validateServerIdWithNoMatchingServersFailsValidation() {
         mockedPostBuildStep
                 .when(AbstractOctopusDeployRecorderPostBuildStep::getOctopusDeployServersIds)
                 .thenReturn(Collections.singletonList("someId"));
@@ -287,12 +288,12 @@ class OctopusValidatorTest extends BaseOctopusServerEnabledTest {
         final FormValidation validation = OctopusValidator.validateServerId("otherId");
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.ERROR);
-        assertThat(validation.getMessage())
+        assertThat(StringEscapeUtils.unescapeHtml(validation.getMessage()))
                 .isEqualTo("There are no Octopus Deploy servers configured with this Server Id.");
     }
 
     @Test
-    public void testValidateServerIdWithMatchingServerPassesValidation() {
+    public void validateServerIdWithMatchingServerPassesValidation() {
         mockedPostBuildStep
                 .when(AbstractOctopusDeployRecorderPostBuildStep::getOctopusDeployServersIds)
                 .thenReturn(Collections.singletonList("someId"));
@@ -303,52 +304,52 @@ class OctopusValidatorTest extends BaseOctopusServerEnabledTest {
     }
 
     @Test
-    public void testValidateDirectoryWithNullPathPassesValidation() {
+    public void validateDirectoryWithNullPathPassesValidation() {
         final FormValidation validation = OctopusValidator.validateDirectory(null);
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.OK);
     }
 
     @Test
-    public void testValidateDirectoryWithEmptyPathPassesValidation() {
+    public void validateDirectoryWithEmptyPathPassesValidation() {
         final FormValidation validation = OctopusValidator.validateDirectory("");
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.OK);
     }
 
     @Test
-    public void testValidateDirectoryWithMissingPathFailsValidation() {
+    public void validateDirectoryWithMissingPathFailsValidation() {
         final FormValidation validation = OctopusValidator.validateDirectory("bad-path");
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.ERROR);
-        assertThat(validation.getMessage()).isEqualTo("This is not a path to a directory");
+        assertThat(StringEscapeUtils.unescapeHtml(validation.getMessage())).isEqualTo("This is not a path to a directory");
     }
 
     @Test
-    public void testValidateDeploymentTimeoutWithNullTimeoutPassesValidation() {
+    public void validateDeploymentTimeoutWithNullTimeoutPassesValidation() {
         final FormValidation validation = OctopusValidator.validateDeploymentTimeout(null);
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.OK);
     }
 
     @Test
-    public void testValidateDeploymentTimeoutWithEmptyTimeoutPassesValidation() {
+    public void validateDeploymentTimeoutWithEmptyTimeoutPassesValidation() {
         final FormValidation validation = OctopusValidator.validateDeploymentTimeout("");
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.OK);
     }
 
     @Test
-    public void testValidateDeploymentTimeoutWithInvalidTimeoutFormatFailsValidation() {
+    public void validateDeploymentTimeoutWithInvalidTimeoutFormatFailsValidation() {
         final FormValidation validation = OctopusValidator.validateDeploymentTimeout("invalid");
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.ERROR);
-        assertThat(validation.getMessage())
+        assertThat(StringEscapeUtils.unescapeHtml(validation.getMessage()))
                 .isEqualTo("This is not a valid deployment timeout it should be in the format HH:mm:ss");
     }
 
     @Test
-    public void testValidateDeploymentTimeoutWithValidTimeoutFormatPassesValidation() {
+    public void validateDeploymentTimeoutWithValidTimeoutFormatPassesValidation() {
         final FormValidation validation = OctopusValidator.validateDeploymentTimeout("11:30:00");
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.OK);

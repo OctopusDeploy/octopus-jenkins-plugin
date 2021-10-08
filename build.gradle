@@ -29,6 +29,7 @@ dependencies {
   testImplementation libs.bundles.junit
   testImplementation libs.assertj.core
   testImplementation libs.mockito.inline
+  testImplementation libs.apache.commons.text
 }
 
 jenkinsPlugin {
@@ -55,6 +56,7 @@ configurations.all {
 }
 
 repositories {
+  mavenLocal() // TODO (scl): Remove me!!!
   maven { url "https://packages.octopushq.com/artifactory/maven" }
 }
 
