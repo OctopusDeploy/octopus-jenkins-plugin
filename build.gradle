@@ -35,6 +35,9 @@ dependencies {
   implementation libs.jenkins.workflow
   compileOnly libs.jetbrains.annotations
 
+  testImplementation libs.bundles.junit
+  testImplementation libs.assertj.core
+
   integrationTestImplementation libs.bundles.octopus
   integrationTestImplementation libs.bundles.junit
   integrationTestImplementation libs.assertj.core
@@ -79,9 +82,8 @@ spotless {
   }
 }
 
-// Legacy unit tests run on transient JUnit 4 from Jenkins
 test {
-  useJUnit()
+  useJUnitPlatform()
 }
 
 if (file('src/integration-test').directory) {
@@ -102,7 +104,7 @@ if (file('src/integration-test').directory) {
       showStandardStreams = true
       exceptionFormat = 'full'
     }
-    maxParallelForks = 1; // Consider increasing this when test volume exceeds overhead of docker containers starting
+    maxParallelForks = 1 // Consider increasing this when test volume exceeds overhead of docker containers starting
     group = "verification"
     description = "Runs integration tests"
     testClassesDirs = sourceSets.integrationTest.output.classesDirs
