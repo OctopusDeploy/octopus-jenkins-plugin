@@ -11,7 +11,11 @@ description = 'Octopus Deploy'
 defaultTasks 'build', 'checkLicenses', 'jpi'
 
 // Exclude license tasks provided by plugin (see custom tasks 'check-licenses.gradle')
-project.gradle.startParameter.excludedTaskNames = ['licenseMain', 'licenseTest']
+project.gradle.startParameter.excludedTaskNames = [
+  'licenseMain',
+  'licenseTest',
+  'licenseIntegrationTest'
+]
 apply from: "${rootDir}/gradle/check-licenses.gradle"
 
 java {
@@ -20,16 +24,22 @@ java {
   }
 }
 
+configurations {
+  integrationTestImplementation.extendsFrom testImplementation
+}
+
 dependencies {
   implementation libs.bundles.octopus
   implementation libs.apache.commons.collections4
   implementation libs.google.gson
   implementation libs.jenkins.workflow
   compileOnly libs.jetbrains.annotations
-  testImplementation libs.bundles.junit
-  testImplementation libs.assertj.core
-  testImplementation libs.mockito.inline
-  testImplementation libs.apache.commons.text
+
+  integrationTestImplementation libs.bundles.octopus
+  integrationTestImplementation libs.bundles.junit
+  integrationTestImplementation libs.assertj.core
+  integrationTestImplementation libs.mockito.inline
+  integrationTestImplementation libs.apache.commons.text
 }
 
 jenkinsPlugin {
@@ -69,10 +79,34 @@ spotless {
   }
 }
 
+// Legacy unit tests run on transient JUnit 4 from Jenkins
 test {
-  useJUnitPlatform()
-  testLogging {
-    showStandardStreams = true
-    exceptionFormat = 'full'
+  useJUnit()
+}
+
+if (file('src/integration-test').directory) {
+  sourceSets {
+    integrationTest {
+      java {
+        compileClasspath += main.output
+        runtimeClasspath += main.output
+        srcDir file('src/integration-test/java')
+      }
+      resources.srcDir file('src/integration-test/resources')
+    }
+  }
+
+  task integrationTest(type: Test, dependsOn: ["compileTestJava"]) {
+    useJUnitPlatform()
+    testLogging {
+      showStandardStreams = true
+      exceptionFormat = 'full'
+    }
+    maxParallelForks = 1; // Consider increasing this when test volume exceeds overhead of docker containers starting
+    group = "verification"
+    description = "Runs integration tests"
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    outputs.upToDateWhen { false }
   }
 }

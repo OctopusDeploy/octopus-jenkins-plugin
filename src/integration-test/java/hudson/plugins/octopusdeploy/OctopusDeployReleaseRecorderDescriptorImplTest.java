@@ -3,19 +3,13 @@ package hudson.plugins.octopusdeploy;
 import com.octopus.helper.BaseRecorderTest;
 import com.octopus.sdk.domain.Project;
 import com.octopus.sdk.domain.ProjectGroup;
-import com.octopus.sdk.model.tag.TagResource;
-import com.octopus.sdk.model.tenant.TenantResource;
 import hudson.util.ComboBoxModel;
 import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
+import org.apache.commons.text.StringEscapeUtils;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -83,8 +77,8 @@ class OctopusDeployReleaseRecorderDescriptorImplTest extends BaseRecorderTest {
                         spaceScopedClient.getSpaceId());
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.WARNING);
-        assertThat(validation.getMessage())
-                .isEqualTo("Unable to validate release because the project &#039;Proj1&#039; couldn&#039;t be found.");
+        assertThat(StringEscapeUtils.unescapeHtml4(validation.getMessage()))
+                .isEqualTo("Unable to validate release because the project 'Proj1' couldn't be found.");
     }
 
     @Test
@@ -137,48 +131,6 @@ class OctopusDeployReleaseRecorderDescriptorImplTest extends BaseRecorderTest {
 
         assertThat(model.size()).isEqualTo(environmentsToCreate.size());
         assertThat(model).containsAll(environmentsToCreate);
-    }
-
-    @Test
-    public void doFillTenantItems() {
-        List<String> tenantsToCreate = Arrays.asList("Tenant1", "Tenant2", "Tenant3");
-        tenantsToCreate.forEach(name -> spaceScopedClient.createTenant(name));
-
-        final ListBoxModel model = descriptor.doFillTenantItems(JENKINS_OCTOPUS_SERVER_ID,
-                spaceScopedClient.getSpaceId());
-
-        assertThat(model.size()).isEqualTo(tenantsToCreate.size());
-        assertThat(model).extracting("name").containsAll(tenantsToCreate);
-        assertThat(model).extracting("value").containsAll(tenantsToCreate);
-    }
-
-    @Test
-    public void doFillTenantTagItems() throws IOException {
-        List<String> tenantTagsToCreate = Arrays.asList("Tag1", "Tag2");
-        spaceScopedClient.createTagSet("TagSet");
-        tenantTagsToCreate.forEach(name ->
-                spaceScopedClient.createTagInTagSet(name, "#333333", "TagSet"));
-        final List<TagResource> tags =
-                Objects.requireNonNull(spaceScopedClient
-                                .getSpace()
-                                .tagSet()
-                                .getByName("TagSet")
-                                .orElse(null))
-                        .getProperties()
-                        .getTags();
-
-        TenantResource tenant = new TenantResource("Tenant1");
-        tenant.setTenantTags(new HashSet<>(tags
-                .stream()
-                .map(TagResource::getCanonicalTagName).collect(Collectors.toList())));
-        spaceScopedClient.getSpace().tenants().create(tenant);
-
-        final ComboBoxModel model = descriptor.doFillTenantTagItems(JENKINS_OCTOPUS_SERVER_ID,
-                spaceScopedClient.getSpaceId());
-
-        assertThat(model.size()).isEqualTo(tenantTagsToCreate.size());
-        assertThat(model)
-                .containsAll(tenantTagsToCreate.stream().map(tag -> "TagSet/" + tag).collect(Collectors.toList()));
     }
 
     @Test
