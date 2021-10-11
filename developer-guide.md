@@ -1,16 +1,16 @@
-# OctopusDeploy Jenkins Plugin Developer Guide #
+# OctopusDeploy Jenkins Plugin Developer Guide
 This is a getting started guide for a developer who would like to contribute to the plugin, fix a bug, make an improvement, contributions from the community are welcome.
 
-## Introduction ##
+## Introduction
 The following guide will briefly outline how to get started using an Ubuntu based OS, or using a recent version of Microsoft Windows
 
 This project is in the process of being migrated over to the Gradle build system, in the interim this guide will contain instructions for development using either Maven *or* Gradle
 
-## Fundamentals ##
+## Fundamentals
 The Jenkins Octopus plugin currently requires **Java 8** and a locally installed version of **Octo CLI**
 
-## Environment Setup ##
-### Ubuntu ###
+## Environment Setup
+### Ubuntu
 1. Install Java
 > sudo apt install openjdk-8-jdk
 2. Install dotnet
@@ -18,7 +18,7 @@ The Jenkins Octopus plugin currently requires **Java 8** and a locally installed
 3. Install Octo CLI
 > dotnet tool install Octopus.DotNet.Cli --global
 
-### Windows ###
+### Windows
 1. Download [OpenJDK 8 LTS](https://adoptopenjdk.net/) and install to a location of your choosing
 2. Set the `JAVA_HOME` environment variable to the root directory of the JDK installation
 3. Ensure `%JAVA_HOME%\bin` is added to your path
@@ -26,11 +26,11 @@ The Jenkins Octopus plugin currently requires **Java 8** and a locally installed
 5. Install Octo CLI
 > dotnet tool install Octopus.DotNet.Cli --global
 
-# Running the Plugin #
+# Build and run the plugin locally
 Clone this repository locally with Git:
 > git clone https://github.com/OctopusDeploy/octopus-jenkins-plugin
 
-## Configure using Maven and IntelliJ ##
+## Configure using Maven and IntelliJ
 1. Open the project in IntelliJ
 2. With the project selected in the project nav hit `F4`, select `Java 1.8`
 ![java-sdk](./developer-guide-images/java-sdk.png)
@@ -45,7 +45,7 @@ Clone this repository locally with Git:
 7. From then on for this run you can go to `localhost:8080/jenkins`
 ![localhost-8080](./developer-guide-images/localhost-8080.png)
 
-## Configure using Gradle and IntelliJ ##
+## Configure using Gradle and IntelliJ
 1. Import project into Intellij as a Gradle project
 2. Ensure the correct Java version is set
 3. Run the `server` task from the Gradle panel or via the command line
@@ -54,21 +54,22 @@ Clone this repository locally with Git:
 6. Once running the Jenkins instance will be available at `http://127.0.0.1:8080` by default
 
 
-# Running Tests #
+# Running Tests
+To execute tests from the command line, execute:
 
-## With Maven ##
+## With Maven
 **Unit tests**
 > mvn test
 
-## With Gradle ##
+## With Gradle
 **Unit tests**
 > ./gradlew test
 
 **Integration tests**
 > ./gradlew integrationTest
 
-# Releasing a new version #
-## Deploying the Jenkins plugin ##
+# Releasing a new version
+## Deploying the Jenkins plugin
 Jenkins provides hosting for plugins in an artifactory repository: https://repo.jenkins-ci.org/. Jenkins also provides a GitHub repository and CI, but we have elected to use our own GitHub and CI.
 
 The Octopus plugin inherits the Jenkins Plugin POM file (https://github.com/jenkinsci/plugin-pom) that includes configuration required to build and deploy the plugin. Build and deploy can be performed by running the command:
@@ -79,15 +80,15 @@ The Octopus plugin inherits the Jenkins Plugin POM file (https://github.com/jenk
 
 `release:perform` builds the required artifacts and uploads them to the Jenkins plugin repository.
 
-## Octopus Specific ##
+## Octopus Specific
 Note: this is only for Octopus Staff on how we release the plugin. Team city houses some of the credentials required to complete the process.
 
-### Setup ###
+### Setup
 1. Create the next milestone
 1. Create an Issue - For any bug fixes or enhancements
 1. You can create the Github "Release" after it has been tagged as part of the deployment process below:
 
-### Deployment ###
+### Deployment
 Our deployment process for this plugin is evolving. The choice to use Team City in this case is that is our tool of choice for deploying Octopus and other plugins, this gives us consistency within Octopus.
 
 Currently go to the Octopus Team City instance and navigate to: `Build Integration / Jenkins Plugin` select the `Release to public Jenkins artifactory` project.
@@ -106,38 +107,38 @@ For most changes the version number is self-managed by the build process. If you
 
 **Please note**: The [plugin repository](https://plugins.jenkins.io/) can take several days before the new version shows on the [download page](https://plugins.jenkins.io/octopusdeploy/). Be patient.
 
-# Inside Jenkins #
-## Configure Octo CLI ##
+# Inside Jenkins
+## Configure Octo CLI
 In the Jenkins version set at the minimum for the plugin, the CLI configuration is found under
 > Manage Jenkins > Global Tool Configuration
 
 If you are testing on an older version of Jenkins (earlier in the code base), it used to be under  *Configure System*
 
 
-# Plugin Concepts #
-## Validation ##
+# Plugin Concepts
+## Validation
 The various build steps offered by the plugin support validation, warnings and errors. These are merely a visual distinction, yellow vs red. Neither will prevent the form/page from being saved.
 
-## Convention Based ##
+## Convention Based
 The way fields are validated is convention based. From the corresponding Jelly file, which defines the HTML layout of the controls. Obtain the field name and create a method in the class that extends AbstractOctopusDeployDescriptorImpl
 
 ![validation naming convention](./developer-guide-images/validation-convention.png)
 
 
-## Help Text ##
+## Help Text
 Are separate files, that are named by convention (help-field.html) in order for the blue question mark to show up.
 
 ![help text](./developer-guide-images/help-text.png)
 
-## Exceptions ##
+## Exceptions
 It appears that the common / supported approach in Jenkins and the plugins is to throw the `IllegalStateException` exception at build time, which gives an ugly stack trace for what is an already known issue.
 
 Having looked around Stack Overflow, forums and within the code bases of other plugins this doesn’t bother them and is how they all do it.
 ![exceptions](./developer-guide-images/exception-stack.png)
 
 
-# Plugin Usages #
-## Setting up a local SVN repository  ##
+# Plugin Usages
+## Setting up a local SVN repository
 https://tecadmin.net/install-subversion-server-on-ubuntu/
 Note that the package libapache2-svn has been replaced by libapache2-mod-svn in recent versions of Ubuntu
 
@@ -150,21 +151,21 @@ svn add hello_world.txt
 svn ci
 ```
 
-## Add SVN to jenkins project ##
+## Add SVN to jenkins project
 ![subversion](./developer-guide-images/subversion.png)
 
-## Build script to clean packages in workspace ##
+## Build script to clean packages in workspace
 ![exec shell](./developer-guide-images/exec-shell-rm.png)
 
 
-## Package application step ##
+## Package application step
 Packages hello_world.txt
 ![package app step](./developer-guide-images/package-app.png)
 
-## Push package ##
+## Push package
 ![push package](./developer-guide-images/push-package.png)
 
-## Handy Links to Blogs / Documentation ##
+## Handy Links to Blogs / Documentation
  - https://jenkins.io/doc/developer/architecture/
  - https://wiki.jenkins.io/display/JENKINS/Basic+guide+to+Jelly+usage+in+Jenkins
  - https://wiki.jenkins.io/display/JENKINS/Extend+Jenkins
@@ -173,7 +174,7 @@ Packages hello_world.txt
  - https://medium.com/faun/net-core-projects-ci-cd-with-jenkins-ubuntu-and-nginx-642aa9d272c9
 
 
-## Troubleshooting ##
+## Troubleshooting
 > Have you bricked / corrupted your Jenkins dev environment?
 > An option is to blow away the currently set up environment by navigating to the `work` at the root of the cloned git repository
 
