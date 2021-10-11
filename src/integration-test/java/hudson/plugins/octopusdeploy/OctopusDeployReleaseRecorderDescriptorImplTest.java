@@ -129,8 +129,7 @@ class OctopusDeployReleaseRecorderDescriptorImplTest extends BaseRecorderTest {
         final ComboBoxModel model = descriptor.doFillEnvironmentItems(JENKINS_OCTOPUS_SERVER_ID,
                 spaceScopedClient.getSpaceId());
 
-        assertThat(model.size()).isEqualTo(environmentsToCreate.size());
-        assertThat(model).containsAll(environmentsToCreate);
+        assertThat(model).containsExactlyInAnyOrderElementsOf(environmentsToCreate);
     }
 
     @Test
@@ -142,8 +141,7 @@ class OctopusDeployReleaseRecorderDescriptorImplTest extends BaseRecorderTest {
         final ComboBoxModel model = descriptor.doFillProjectItems(JENKINS_OCTOPUS_SERVER_ID,
                 spaceScopedClient.getSpaceId());
 
-        assertThat(model.size()).isEqualTo(projectsToCreate.size());
-        assertThat(model).containsAll(projectsToCreate);
+        assertThat(model).containsExactlyInAnyOrderElementsOf(projectsToCreate);
     }
 
     @Test
