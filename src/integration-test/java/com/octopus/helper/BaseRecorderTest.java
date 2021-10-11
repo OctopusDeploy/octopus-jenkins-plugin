@@ -14,7 +14,7 @@ public class BaseRecorderTest extends BaseOctopusServerEnabledTest {
     public static final String JENKINS_OCTOPUS_SERVER_ID = "default";
 
     private MockedStatic<AbstractOctopusDeployRecorderPostBuildStep> mockedPostBuildStep;
-    public SpaceScopedClient spaceScopedClient = null;
+    public SpaceScopedClient spaceScopedClient;
 
     @BeforeEach
     public void setUp(final TestInfo testInfo) {
