@@ -1,14 +1,15 @@
 package hudson.plugins.octopusdeploy;
 
 import com.octopus.helper.BaseRecorderTest;
+import com.octopus.sdk.domain.Project;
 import com.octopus.sdk.domain.ProjectGroup;
+import com.octopus.sdk.model.release.ReleaseResource;
 import com.octopus.sdk.model.tag.TagResource;
 import com.octopus.sdk.model.tenant.TenantResource;
 import hudson.util.ComboBoxModel;
 import hudson.util.FormValidation;
 import org.apache.commons.text.StringEscapeUtils;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -84,12 +85,11 @@ public class OctopusDeployDeploymentRecorderDescriptorImplTest extends BaseRecor
                 .isEqualTo("Unable to validate release because the project 'Proj1' couldn't be found.");
     }
 
-    // TODO (scl): Create release and enable test
     @Test
-    @Disabled
-    public void doCheckReleaseVersion() {
+    public void doCheckReleaseVersion() throws IOException {
         final ProjectGroup projGroup = spaceScopedClient.createProjectGroup("ProjGroup1");
-        spaceScopedClient.createProject("Proj1", projGroup.getProperties().getId());
+        final Project proj1 = spaceScopedClient.createProject("Proj1", projGroup.getProperties().getId());
+        spaceScopedClient.getSpace().releases().create(new ReleaseResource("1.0.0", proj1.getProperties().getId()));
 
         FormValidation validation =
                 descriptor.doCheckReleaseVersion("1.0.0",
@@ -149,7 +149,7 @@ public class OctopusDeployDeploymentRecorderDescriptorImplTest extends BaseRecor
                         .getProperties()
                         .getTags();
 
-        TenantResource tenant = new TenantResource("Tenant1");
+        final TenantResource tenant = new TenantResource("Tenant1");
         tenant.setTenantTags(new HashSet<>(tags
                 .stream()
                 .map(TagResource::getCanonicalTagName).collect(Collectors.toList())));
