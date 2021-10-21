@@ -21,7 +21,7 @@ class OctopusDeployReleaseRecorderDescriptorImplTest extends BaseIntegrationTest
 
     @Test
     public void doCheckProject() {
-        FormValidation validation = descriptor.doCheckProject("Proj1",
+        FormValidation validation = descriptor.doCheckProject("Project1",
                 JENKINS_OCTOPUS_SERVER_ID,
                 space.getProperties().getId());
 
@@ -31,7 +31,7 @@ class OctopusDeployReleaseRecorderDescriptorImplTest extends BaseIntegrationTest
     @Test
     public void doCheckChannel() {
         FormValidation validation = descriptor.doCheckChannel("Channel1",
-                "Proj1",
+                "Project1",
                 JENKINS_OCTOPUS_SERVER_ID,
                 space.getProperties().getId());
 
@@ -78,7 +78,7 @@ class OctopusDeployReleaseRecorderDescriptorImplTest extends BaseIntegrationTest
     public void doCheckReleaseVersion() {
         FormValidation validation =
                 descriptor.doCheckReleaseVersion("9.9.9", // release must not exist
-                        "Proj1",
+                        "Project1",
                         JENKINS_OCTOPUS_SERVER_ID,
                         space.getProperties().getId());
 
@@ -102,7 +102,7 @@ class OctopusDeployReleaseRecorderDescriptorImplTest extends BaseIntegrationTest
 
     @Test
     public void doCheckEnvironment() {
-        final FormValidation validation = descriptor.doCheckEnvironment("Env1",
+        final FormValidation validation = descriptor.doCheckEnvironment("Environment1",
                 JENKINS_OCTOPUS_SERVER_ID,
                 space.getProperties().getId());
 
@@ -111,7 +111,7 @@ class OctopusDeployReleaseRecorderDescriptorImplTest extends BaseIntegrationTest
 
     @Test
     public void doFillEnvironmentItems() {
-        List<String> exitingEnvironmentNames = Arrays.asList("Env1", "Env2", "Env3");
+        List<String> exitingEnvironmentNames = Arrays.asList("Environment1", "Environment2", "Environment3");
 
         final ComboBoxModel model = descriptor.doFillEnvironmentItems(JENKINS_OCTOPUS_SERVER_ID,
                 space.getProperties().getId());
@@ -121,7 +121,7 @@ class OctopusDeployReleaseRecorderDescriptorImplTest extends BaseIntegrationTest
 
     @Test
     public void doFillProjectItems() {
-        List<String> existingProjectNames = Arrays.asList("Proj1", "Proj2", "Proj3");
+        List<String> existingProjectNames = Arrays.asList("Project1", "Project2", "Project3");
 
         final ComboBoxModel model = descriptor.doFillProjectItems(JENKINS_OCTOPUS_SERVER_ID,
                 space.getProperties().getId());
@@ -133,7 +133,7 @@ class OctopusDeployReleaseRecorderDescriptorImplTest extends BaseIntegrationTest
     public void doFillChannelItems() {
         List<String> existingChannelNames = Arrays.asList("Channel1", "Channel2", "Channel3");
 
-        final ComboBoxModel model = descriptor.doFillChannelItems("Proj1",
+        final ComboBoxModel model = descriptor.doFillChannelItems("Project1",
                 JENKINS_OCTOPUS_SERVER_ID,
                 space.getProperties().getId());
 

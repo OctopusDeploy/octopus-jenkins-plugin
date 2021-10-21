@@ -44,23 +44,23 @@ class OctopusValidatorTest extends BaseIntegrationTest {
 
     @Test
     public void validateProjectWithoutCorrespondingProjectNameCaseFailsValidation() {
-        final FormValidation validation = validator.validateProject("proj1");
+        final FormValidation validation = validator.validateProject("project1"); // unmatched case
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.WARNING);
         assertThat(StringEscapeUtils.unescapeHtml4(validation.getMessage()))
-                .isEqualTo("Project name case does not match. Did you mean 'Proj1'?");
+                .isEqualTo("Project name case does not match. Did you mean 'Project1'?");
     }
 
     @Test
     public void validateProjectWithCorrespondingProjectNamePassesValidation() {
-        final FormValidation validation = validator.validateProject("Proj1");
+        final FormValidation validation = validator.validateProject("Project1");
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.OK);
     }
 
     @Test
     public void validateChannelEmptyChannelPassesValidation() {
-        final FormValidation validation = validator.validateChannel("", "Proj1");
+        final FormValidation validation = validator.validateChannel("", "Project1");
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.OK);
     }
@@ -85,7 +85,7 @@ class OctopusValidatorTest extends BaseIntegrationTest {
 
     @Test
     public void validateChannelWithoutCorrespondingChannelFailsValidation() {
-        final FormValidation validation = validator.validateChannel("Channel99", "Proj1");
+        final FormValidation validation = validator.validateChannel("Channel99", "Project1");
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.WARNING);
         assertThat(StringEscapeUtils.unescapeHtml4(validation.getMessage()))
@@ -95,7 +95,7 @@ class OctopusValidatorTest extends BaseIntegrationTest {
 
     @Test
     public void validateChannelWithCorrespondingChannelAndProjectPassesValidation() {
-        final FormValidation validation = validator.validateChannel("Channel1", "Proj1");
+        final FormValidation validation = validator.validateChannel("Channel1", "Project1");
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.OK);
     }
@@ -121,16 +121,17 @@ class OctopusValidatorTest extends BaseIntegrationTest {
 
     @Test
     public void validateEnvironmentWithUnmatchedEnvironmentFailsValidation() {
-        final FormValidation validation = validator.validateEnvironment("env1");
+        final FormValidation validation
+                = validator.validateEnvironment("environment1"); // unmatched case
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.WARNING);
         assertThat(StringEscapeUtils.unescapeHtml4(validation.getMessage()))
-                .isEqualTo("Environment name case does not match. Did you mean 'Env1'?");
+                .isEqualTo("Environment name case does not match. Did you mean 'Environment1'?");
     }
 
     @Test
     public void validateEnvironmentWithCorrespondingEnvironmentPassesValidation() {
-        final FormValidation validation = validator.validateEnvironment("Env1");
+        final FormValidation validation = validator.validateEnvironment("Environment1");
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.OK);
     }
@@ -148,7 +149,7 @@ class OctopusValidatorTest extends BaseIntegrationTest {
 
     @Test
     public void validateReleaseWhereReleaseMustExistFailsValidation() throws IOException {
-        final com.octopus.sdk.domain.Project existingProject = space.projects().getByName("Proj1").get();
+        final com.octopus.sdk.domain.Project existingProject = space.projects().getByName("Project1").get();
         final Project project =
                 new Project(existingProject.getProperties().getId(), existingProject.getProperties().getName());
 
@@ -158,13 +159,13 @@ class OctopusValidatorTest extends BaseIntegrationTest {
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.WARNING);
         assertThat(StringEscapeUtils.unescapeHtml4(validation.getMessage()))
-                .isEqualTo("Release 9.9.9 doesn't exist for project 'Proj1'. " +
+                .isEqualTo("Release 9.9.9 doesn't exist for project 'Project1'. " +
                         "If this field is computed you can disregard this warning.");
     }
 
     @Test
     public void validateReleaseWhereReleaseMustExistPassesValidation() throws IOException {
-        final com.octopus.sdk.domain.Project existingProject = space.projects().getByName("Proj1").get();
+        final com.octopus.sdk.domain.Project existingProject = space.projects().getByName("Project1").get();
         final Project project =
                 new Project(existingProject.getProperties().getId(), existingProject.getProperties().getName());
 
@@ -177,7 +178,7 @@ class OctopusValidatorTest extends BaseIntegrationTest {
 
     @Test
     public void validateReleaseWhereReleaseMustNotExistFailsValidation() throws IOException {
-        final com.octopus.sdk.domain.Project existingProject = space.projects().getByName("Proj1").get();
+        final com.octopus.sdk.domain.Project existingProject = space.projects().getByName("Project1").get();
         final Project project =
                 new Project(existingProject.getProperties().getId(), existingProject.getProperties().getName());
 
@@ -187,12 +188,12 @@ class OctopusValidatorTest extends BaseIntegrationTest {
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.ERROR);
         assertThat(StringEscapeUtils.unescapeHtml4(validation.getMessage()))
-                .isEqualTo("Release 1.0.0 already exists for project 'Proj1'!");
+                .isEqualTo("Release 1.0.0 already exists for project 'Project1'!");
     }
 
     @Test
     public void validateReleaseWhereReleaseMustNotExistPassesValidation() throws IOException {
-        final com.octopus.sdk.domain.Project existingProject = space.projects().getByName("Proj1").get();
+        final com.octopus.sdk.domain.Project existingProject = space.projects().getByName("Project1").get();
         final Project project =
                 new Project(existingProject.getProperties().getId(), existingProject.getProperties().getName());
 

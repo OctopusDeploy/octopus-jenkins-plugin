@@ -37,6 +37,7 @@ import org.mockito.Mockito;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -109,21 +110,20 @@ public class BaseIntegrationTest extends BaseOctopusServerEnabledTest {
         final ProjectGroup projectGroup = space.projectGroups().create(new ProjectGroupResource("ProjectGroup1"));
         final Lifecycle lifecycle = space.lifecycles().create(new LifecycleResource("LifeCycle1"));
 
-        final Project proj1 = space.projects().create(new ProjectResource("Proj1",
+        final Project project1 = space.projects().create(new ProjectResource("Project1",
                 lifecycle.getProperties().getId(),
                 projectGroup.getProperties().getId()));
-        space.projects().create(new ProjectResource("Proj2",
-                lifecycle.getProperties().getId(),
-                projectGroup.getProperties().getId()));
-        space.projects().create(new ProjectResource("Proj3",
-                lifecycle.getProperties().getId(),
-                projectGroup.getProperties().getId()));
+        for (String name : Arrays.asList("Project2", "Project3")) {
+            space.projects().create(new ProjectResource(name,
+                    lifecycle.getProperties().getId(),
+                    projectGroup.getProperties().getId()));
+        }
 
-        space.channels().create(new ChannelResource("Channel1", proj1.getProperties().getId()));
-        space.channels().create(new ChannelResource("Channel2", proj1.getProperties().getId()));
-        space.channels().create(new ChannelResource("Channel3", proj1.getProperties().getId()));
+        for (String name : Arrays.asList("Channel1", "Channel2", "Channel3")) {
+            space.channels().create(new ChannelResource(name, project1.getProperties().getId()));
+        }
 
-        space.releases().create(new ReleaseResource("1.0.0", proj1.getProperties().getId()));
+        space.releases().create(new ReleaseResource("1.0.0", project1.getProperties().getId()));
 
         final TagSetResourceWithLinks tagSetWithLinks =
                 space.tagSets().create(new TagSetResource("TagSet1")).getProperties();
@@ -137,12 +137,12 @@ public class BaseIntegrationTest extends BaseOctopusServerEnabledTest {
                 .map(TagResource::getCanonicalTagName)
                 .collect(Collectors.toList())));
         space.tenants().create(tenant1);
-        space.tenants().create(new TenantResource("Tenant2"));
-        space.tenants().create(new TenantResource("Tenant3"));
+        for (String name : Arrays.asList("Tenant2", "Tenant3")) {
+            space.tenants().create(new TenantResource(name));
+        }
 
-        space.environments().create(new EnvironmentResource("Env1"));
-        space.environments().create(new EnvironmentResource("Env2"));
-        space.environments().create(new EnvironmentResource("Env3"));
-
+        for (String name : Arrays.asList("Environment1", "Environment2", "Environment3")) {
+            space.environments().create(new EnvironmentResource(name));
+        }
     }
 }

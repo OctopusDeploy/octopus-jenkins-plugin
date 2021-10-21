@@ -19,7 +19,7 @@ public class OctopusDeployDeploymentRecorderDescriptorImplTest extends BaseInteg
 
     @Test
     public void doCheckProject() {
-        FormValidation validation = descriptor.doCheckProject("Proj1",
+        FormValidation validation = descriptor.doCheckProject("Project1",
                 JENKINS_OCTOPUS_SERVER_ID,
                 space.getProperties().getId());
 
@@ -73,7 +73,7 @@ public class OctopusDeployDeploymentRecorderDescriptorImplTest extends BaseInteg
     public void doCheckReleaseVersion() {
         FormValidation validation =
                 descriptor.doCheckReleaseVersion("1.0.0",
-                        "Proj1",
+                        "Project1",
                         JENKINS_OCTOPUS_SERVER_ID,
                         space.getProperties().getId());
 
@@ -82,7 +82,7 @@ public class OctopusDeployDeploymentRecorderDescriptorImplTest extends BaseInteg
 
     @Test
     public void doCheckEnvironment() {
-        final FormValidation validation = descriptor.doCheckEnvironment("Env1",
+        final FormValidation validation = descriptor.doCheckEnvironment("Environment1",
                 JENKINS_OCTOPUS_SERVER_ID,
                 space.getProperties().getId());
 
@@ -91,7 +91,7 @@ public class OctopusDeployDeploymentRecorderDescriptorImplTest extends BaseInteg
 
     @Test
     public void doFillEnvironmentItems() {
-        List<String> existingEnvironmentNames = Arrays.asList("Env1", "Env2", "Env3");
+        List<String> existingEnvironmentNames = Arrays.asList("Environment1", "Environment2", "Environment3");
 
         final ComboBoxModel model = descriptor.doFillEnvironmentItems(JENKINS_OCTOPUS_SERVER_ID,
                 space.getProperties().getId());
@@ -101,7 +101,7 @@ public class OctopusDeployDeploymentRecorderDescriptorImplTest extends BaseInteg
 
     @Test
     public void doFillProjectItems() {
-        List<String> existingProjectNames = Arrays.asList("Proj1", "Proj2", "Proj3");
+        List<String> existingProjectNames = Arrays.asList("Project1", "Project2", "Project3");
 
         final ComboBoxModel model = descriptor.doFillProjectItems(JENKINS_OCTOPUS_SERVER_ID,
                 space.getProperties().getId());
