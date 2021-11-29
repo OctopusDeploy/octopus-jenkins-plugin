@@ -39,6 +39,7 @@ dependencies {
   testImplementation libs.assertj.core
   testImplementation libs.mockito.jupiter
   testImplementation libs.mockito.inline
+  testImplementation libs.bundles.octopus
 
   integrationTestImplementation libs.bundles.octopus
   integrationTestImplementation libs.bundles.junit
