@@ -20,9 +20,7 @@ jobs:
           dotnet-version: 5.0.x
       - name: Install Octopus CLI
         id: install_cli
-        uses: OctopusDeploy/install-octopus-cli-action@<version>
-        with:
-          version: latest
+        uses: OctopusDeploy/install-octopus-cli-action@3451.0.3458
       - name: Setup JDK8
         uses: actions/setup-java@v2
         with:
