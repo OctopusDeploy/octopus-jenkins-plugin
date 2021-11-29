@@ -30,7 +30,7 @@ jobs:
       - name: Build
         run: ./gradlew build --exclude-task test
       - name: Execute Unit & E2E Tests
-        run: ./gradlew test
+        run: env && ./gradlew test
         env:
           OCTOPUS_LICENSE: ${{ secrets.OCTOPUS_LICENSE }}
           OCTOPUS_SDK_AT_USE_EXISTING_SERVER: false
