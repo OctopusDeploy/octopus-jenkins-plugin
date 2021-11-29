@@ -88,6 +88,10 @@ spotless {
 
 test {
   useJUnitPlatform()
+  testLogging {
+    showStandardStreams = true
+    exceptionFormat = 'full'
+  }
 }
 
 if (file('src/integration-test').directory) {
