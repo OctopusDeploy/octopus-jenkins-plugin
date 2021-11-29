@@ -27,10 +27,8 @@ jobs:
         with:
           java-version: '8'
           distribution: 'adopt'
-      - name: Build
-        run: ./gradlew build --exclude-task test
-      - name: Execute Unit & E2E Tests
-        run: env && ./gradlew test
+      - name: Build, Execute Unit Tests & E2E Tests
+        run: ./gradlew build
         env:
           OCTOPUS_LICENSE: ${{ secrets.OCTOPUS_LICENSE }}
           OCTOPUS_SDK_AT_USE_EXISTING_SERVER: false

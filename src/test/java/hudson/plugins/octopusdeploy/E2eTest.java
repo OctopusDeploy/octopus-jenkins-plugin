@@ -75,7 +75,7 @@ public class E2eTest {
         jenkinsRule.buildAndAssertSuccess(project);
 
         // OctopusDeployPackRecorder - ZIP file created on local file system
-        assertThat(new File(temporaryFolder.getRoot() + "\\PackageId.1.0.0.zip")).exists().isFile();
+        assertThat(new File(String.valueOf(temporaryFolder.getRoot().toPath().resolve("PackageId.1.0.0.zip")))).exists().isFile();
 
         // OctopusDeployPushRecorder - Packaged pushed to Octopus
         assertThat(space.packages().getAll())
