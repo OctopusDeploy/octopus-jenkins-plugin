@@ -22,6 +22,8 @@ jobs:
         uses: OctopusDeploy/install-octopus-cli-action@v1.1.1
         with:
           version: latest
+      - name: Set Octo CLI Path
+        run: echo "OCTOPUS_CLI_PATH=$(which octo)" >> $GITHUB_ENV
       - name: Setup JDK8
         uses: actions/setup-java@v2
         with:
@@ -32,7 +34,6 @@ jobs:
         env:
           OCTOPUS_LICENSE: ${{ secrets.OCTOPUS_LICENSE }}
           OCTOPUS_SDK_AT_USE_EXISTING_SERVER: false
-          OCTOPUS_CLI_PATH: ${{ $(which octo) }}
       - name: Execute Integration Tests
         run: ./gradlew integrationTest
         env:
