@@ -32,7 +32,7 @@ jobs:
         env:
           OCTOPUS_LICENSE: ${{ secrets.OCTOPUS_LICENSE }}
           OCTOPUS_SDK_AT_USE_EXISTING_SERVER: false
-          OCTOPUS_CLI_PATH: $(which octo)
+          OCTOPUS_CLI_PATH: ${{ $(which octo) }}
       - name: Execute Integration Tests
         run: ./gradlew integrationTest
         env:
