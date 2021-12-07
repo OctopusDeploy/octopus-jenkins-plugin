@@ -19,11 +19,11 @@ jobs:
         with:
           dotnet-version: 5.0.x
       - name: Install Octopus CLI
+        id: octo-cli
         uses: OctopusDeploy/install-octopus-cli-action@v1.1.1
         with:
           version: latest
-      - name: Set Octo CLI Path
-        run: echo "OCTOPUS_CLI_PATH=$(which octo)" >> $GITHUB_ENV
+        run: echo "::set-output name=install-path::$(which octo)"
       - name: Setup JDK8
         uses: actions/setup-java@v2
         with:
@@ -34,6 +34,7 @@ jobs:
         env:
           OCTOPUS_LICENSE: ${{ secrets.OCTOPUS_LICENSE }}
           OCTOPUS_SDK_AT_USE_EXISTING_SERVER: false
+          OCTOPUS_CLI_PATH: ${{ steps.octo-cli.outputs.install-path }}
       - name: Execute Integration Tests
         run: ./gradlew integrationTest
         env:
