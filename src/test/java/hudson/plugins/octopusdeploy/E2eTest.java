@@ -87,7 +87,7 @@ public class E2eTest {
     }
 
     private String getProjectConfiguration() throws URISyntaxException, IOException {
-        String rawConfig = new String(Files.readAllBytes(Paths.get(Objects.requireNonNull(getClass()
+        final String rawConfig = new String(Files.readAllBytes(Paths.get(Objects.requireNonNull(getClass()
                         .getClassLoader()
                         .getResource("e2eTestProjectConfig.xml"))
                 .toURI())));
