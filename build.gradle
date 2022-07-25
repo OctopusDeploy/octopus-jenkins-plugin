@@ -114,10 +114,9 @@ if (file('src/integration-test').directory) {
 }
 
 publishing {
-    repositories {
-        maven {
-            // change to point to your repo, e.g. http://my.org/repo
-            url = 'https://packages.octopushq.com/artifactory'
-        }
+  repositories {
+    maven {
+      url = 'https://packages.octopushq.com/artifactory'
     }
+  }
 }
