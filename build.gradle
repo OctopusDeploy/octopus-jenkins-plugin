@@ -118,9 +118,9 @@ publishing {
     maven {
       url 'https://packages.octopushq.com/artifactory'
       credentials(PasswordCredentials) {
-            username ${artifactory.username}
-            password ${artifactory.token}
-        }
+        username '${artifactory.username}'
+        password '${artifactory.token}'
+      }
     }
   }
 }
