@@ -18,6 +18,13 @@ jobs:
   build:
     name: Build and Test
     runs-on: ubuntu-latest
+    # conditionally skip build on PR merge of release-please, because the release creation is going to trigger the real build
+    if: ${{ github.ref_name != 'main' || github.event.head_commit.author.username != 'team-integrations-fnm-bot' }}
+    env:
+      OCTOPUS_API_KEY: ${{ secrets.OCTOPUS_API_KEY }}
+      OCTOPUS_HOST: ${{ secrets.OCTOPUS_URL }}
+      OCTOPUS_SPACE: Integrations
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -72,12 +79,34 @@ jobs:
           OCTOPUS_LICENSE: ${{ secrets.OCTOPUS_LICENSE }}
           OCTOPUS_SDK_AT_USE_EXISTING_SERVER: false
 
-      - name: Create Plugin Zip Deployment
+      - name: Create Plugin Zip
         id: create-package
         run: |
-          ./gradlew publish -Pversion=${{ steps.git-version.outputs.nugetVersion }} -Partifactory.username=${{ secrets.ARTIFACTORY_USER }} -Partifactory.password=${{ secrets.ARTIFACTORY_TOKEN }}
+          ./gradlew publishToMavenLocal -Pversion=${{ steps.git-version.outputs.nugetVersion }}
+          zip -rj Octopus.Jenkins.${{ steps.git-version.outputs.nugetVersion }}.zip  /tmp/mvn_repo/**/*
 
       - uses: actions/upload-artifact@v3
         with:
           name: Octopus.Jenkins.${{ steps.git-version.outputs.nugetVersion }}
-          path: "${{ steps.create-package.outputs.package-created }}"
+          path: "Octopus.Jenkins.${{ steps.git-version.outputs.nugetVersion }}.zip"
+
+      - name: Push a package to Octopus Deploy 🐙
+        uses: OctopusDeploy/push-package-action@v2
+        with:
+          packages: "Octopus.Jenkins.${{ steps.git-version.outputs.nugetVersion }}.zip"
+
+      - name: Fetch Release Notes
+        id: fetch-release-notes
+        if: github.event_name == 'release'
+        run: |
+          echo "::debug::${{github.event_name}}"
+          OUTPUT_FILE="release_notes.txt"
+          jq --raw-output '.release.body' ${{ github.event_path }} | sed 's#\r#  #g' > $OUTPUT_FILE
+          echo "::set-output name=release-note-file::$OUTPUT_FILE"
+
+      - name: Create a release in Octopus Deploy 🐙
+        uses: OctopusDeploy/create-release-action@v2
+        with:
+          project: "TeamCity Plugin"
+          package_version: ${{ steps.git-version.outputs.nugetVersion }}
+          release_notes_file: ${{ steps.fetch-release-notes.outputs.release-note-file }}

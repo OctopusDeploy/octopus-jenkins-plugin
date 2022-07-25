@@ -2,7 +2,6 @@ plugins {
   alias(libs.plugins.jenkins)
   alias(libs.plugins.license)
   alias(libs.plugins.spotless)
-  id 'maven-publish'
 }
 
 group = 'org.jenkins-ci.plugins'
@@ -113,14 +112,6 @@ if (file('src/integration-test').directory) {
   }
 }
 
-publishing {
-  repositories {
-    maven {
-      url 'https://packages.octopushq.com/artifactory'
-      credentials(PasswordCredentials) {
-        username '${artifactory.username}'
-        password '${artifactory.token}'
-      }
-    }
-  }
+maven {
+     url uri('/tmp/mvn_repo')
 }
