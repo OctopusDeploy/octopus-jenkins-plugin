@@ -2,6 +2,7 @@ plugins {
   alias(libs.plugins.jenkins)
   alias(libs.plugins.license)
   alias(libs.plugins.spotless)
+  id 'maven-publish'
 }
 
 group = 'org.jenkins-ci.plugins'
