@@ -2,8 +2,8 @@ plugins {
   alias(libs.plugins.jenkins)
   alias(libs.plugins.license)
   alias(libs.plugins.spotless)
-  'maven'
 }
+apply plugin: 'maven'
 
 group = 'org.jenkins-ci.plugins'
 description = 'Octopus Deploy'
