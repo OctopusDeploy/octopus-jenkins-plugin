@@ -1,10 +1,17 @@
 name: Build and Test
 
 on:
-  pull_request:
   push:
     branches:
-      - master
+      - "**"
+  release:
+    types: [published]
+
+  schedule:
+    # Daily 5am australian/brisbane time (7pm UTC)
+    - cron: "0 19 * * *"
+
+  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
@@ -13,31 +20,67 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: 5.0.x
+
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v0.9.13
+        with:
+          versionSpec: "5.x"
+
+      - name: Call GitVersion
+        uses: gittools/actions/gitversion/execute@v0.9.13
+
+      - name: Determine Version
+        id: git-version
+        run: |
+          if [ "${{ github.event_name }}" == "schedule" ]
+          then
+            echo "::set-output name=nuGetVersion::${GITVERSION_MAJORMINORPATCH}-nightly-${{ github.run_number }}"
+            echo "Version: ${GITVERSION_MAJORMINORPATCH}-nightly-${{ github.run_number }}"
+          else
+            echo "::set-output name=nuGetVersion::${GITVERSION_FULLSEMVER}"
+            echo "Version: ${GITVERSION_FULLSEMVER}"
+          fi
+
       - name: Install Octopus CLI
-        uses: OctopusDeploy/install-octopus-cli-action@v1.1.1
+        uses: OctopusDeploy/install-octopus-cli-action@v1
         with:
           version: latest
+
       - name: Set Octo CLI Path
         id: cli-path
         run: echo "::set-output name=install-path::$(which octo)"
+
       - name: Setup JDK8
         uses: actions/setup-java@v2
         with:
-          java-version: '8'
-          distribution: 'adopt'
+          java-version: "8"
+          distribution: "adopt"
+
       - name: Build, Execute Unit Tests & E2E Tests
-        run: ./gradlew build
+        run: ./gradlew build test -Pversion=${{ steps.git-version.outputs.nugetVersion }}
         env:
           OCTOPUS_LICENSE: ${{ secrets.OCTOPUS_LICENSE }}
           OCTOPUS_SDK_AT_USE_EXISTING_SERVER: false
           OCTOPUS_CLI_PATH: ${{ steps.cli-path.outputs.install-path }}
+
       - name: Execute Integration Tests
-        run: ./gradlew integrationTest
+        run: ./gradlew integrationTest -Pversion=${{ steps.git-version.outputs.nugetVersion }}
         env:
           OCTOPUS_LICENSE: ${{ secrets.OCTOPUS_LICENSE }}
           OCTOPUS_SDK_AT_USE_EXISTING_SERVER: false
+
+      - name: Create Plugin Zip Deployment
+        id: create-package
+        run: |
+          ./gradlew publish -PaltPackageRepository=${{ steps.git-version.outputs.nugetVersion }} -Pversion=${{ steps.git-version.outputs.nugetVersion }}
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Octopus.Jenkins.${{ steps.git-version.outputs.nugetVersion }}
+          path: "${{ steps.create-package.outputs.package-created }}"
