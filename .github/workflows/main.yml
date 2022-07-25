@@ -107,6 +107,6 @@ jobs:
       - name: Create a release in Octopus Deploy 🐙
         uses: OctopusDeploy/create-release-action@v2
         with:
-          project: "TeamCity Plugin"
+          project: "Jenkins Plugin"
           package_version: ${{ steps.git-version.outputs.nugetVersion }}
           release_notes_file: ${{ steps.fetch-release-notes.outputs.release-note-file }}
