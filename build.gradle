@@ -116,7 +116,11 @@ if (file('src/integration-test').directory) {
 publishing {
   repositories {
     maven {
-      url = 'https://packages.octopushq.com/artifactory'
+      url 'https://packages.octopushq.com/artifactory'
+      credentials(PasswordCredentials) {
+            username ${artifactory.username}
+            password ${artifactory.token}
+        }
     }
   }
 }

@@ -75,7 +75,7 @@ jobs:
       - name: Create Plugin Zip Deployment
         id: create-package
         run: |
-          ./gradlew publish -Pversion=${{ steps.git-version.outputs.nugetVersion }}
+          ./gradlew publish -Pversion=${{ steps.git-version.outputs.nugetVersion }} -Partifactory.username=${{ secrets.ARTIFACTORY_USER }} -Partifactory.password=${{ secrets.ARTIFACTORY_TOKEN }}
 
       - uses: actions/upload-artifact@v3
         with:
