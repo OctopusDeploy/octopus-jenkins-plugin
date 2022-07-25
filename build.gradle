@@ -112,7 +112,3 @@ if (file('src/integration-test').directory) {
     outputs.upToDateWhen { false }
   }
 }
-
-maven {
-     url uri('/tmp/mvn_repo')
-}
