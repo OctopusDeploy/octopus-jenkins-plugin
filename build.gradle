@@ -56,7 +56,8 @@ jenkinsPlugin {
   gitHubUrl = 'https://github.com/OctopusDeploy/octopus-jenkins-plugin'
   compatibleSinceVersion = '1.612'
   fileExtension = 'hpi'
-  configureRepositories = true
+  configureRepositories = false
+  configurePublishing = false
 
   developers {
     developer {
