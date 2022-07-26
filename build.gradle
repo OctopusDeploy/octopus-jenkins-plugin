@@ -4,7 +4,7 @@ plugins {
   alias(libs.plugins.spotless)
 }
 
-group = 'org.jenkins-ci.plugins'
+group = 'hudson.plugins.octopusdeploy'
 description = 'Octopus Deploy'
 
 defaultTasks 'build', 'checkLicenses', 'jpi'
@@ -73,6 +73,10 @@ configurations.all {
 
 repositories {
   maven { url "https://packages.octopushq.com/artifactory/maven" }
+}
+
+tasks.withType(GenerateModuleMetadata) {
+  enabled = false
 }
 
 spotless {
