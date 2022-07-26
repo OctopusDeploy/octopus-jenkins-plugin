@@ -84,7 +84,7 @@ jobs:
         run: |
           ./gradlew publishToMavenLocal -Pversion=${{ steps.git-version.outputs.nugetVersion }}
           pushd ~/.m2/repository
-          zip ${{ github.workspace }}/Octopus.Jenkins.${{ steps.git-version.outputs.nugetVersion }}.zip  '**/octopusdeploy/${{ steps.git-version.outputs.nugetVersion }}/*'
+          find . -wholename '**/octopusdeploy/${{ steps.git-version.outputs.nugetVersion }}/*' -print | zip ${{ github.workspace }}/Octopus.Jenkins.${{ steps.git-version.outputs.nugetVersion }}.zip -@  
           popd
 
       - uses: actions/upload-artifact@v3
