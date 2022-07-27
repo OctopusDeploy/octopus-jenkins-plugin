@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - "**"
+    paths-ignore:
+      - '**/*.md'
+
   release:
     types: [published]
 
