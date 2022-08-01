@@ -21,55 +21,6 @@ public class DeploymentsApi {
     }
 
     /**
-     * Deploys a given release to provided environment.
-     * @param releaseId Release Id from Octopus to deploy.
-     * @param environmentId Environment Id from Octopus to deploy to.
-     * @param tenantId Tenant Id from Octopus to deploy to.
-     * @return the content of the web response.
-     * @throws IOException When the AuthenticatedWebClient receives and error response code
-     */
-    public String executeDeployment(String releaseId, String environmentId, String tenantId) throws IOException {
-        return executeDeployment( releaseId,  environmentId, tenantId, null);
-    }
-
-    /**
-     * Deploys a given release to provided environment.
-     * @param releaseId Release Id from Octopus to deploy.
-     * @param environmentId Environment Id from Octopus to deploy to.
-     * @param tenantId Tenant Id from Octopus to deploy to.
-     * @param variables Variables used during deployment.
-     * @return the content of the web response.
-     * @throws IOException When the AuthenticatedWebClient receives and error response code
-     */
-    public String executeDeployment(String releaseId, String environmentId, String tenantId, Set<Variable> variables) throws IOException {
-        StringBuilder jsonBuilder = new StringBuilder();
-        jsonBuilder.append(String.format("{EnvironmentId:\"%s\",ReleaseId:\"%s\"", environmentId, releaseId));
-
-        if (tenantId != null && !tenantId.isEmpty()) {
-            jsonBuilder.append(String.format(",TenantId:\"%s\"", tenantId));
-        }
-        if (variables != null && !variables.isEmpty()) {
-            jsonBuilder.append(",FormValues:{");
-            Set<String> variablesStrings = new HashSet<String>();
-            for (Variable v : variables) {
-                variablesStrings.add(String.format("\"%s\":\"%s\"", v.getId(), v.getValue()));
-            }
-            jsonBuilder.append(StringUtils.join(variablesStrings, ","));
-            jsonBuilder.append("}");
-        }
-        jsonBuilder.append("}");
-        String json = jsonBuilder.toString();
-
-        byte[] data = json.getBytes(Charset.forName(UTF8));
-        AuthenticatedWebClient.WebResponse response = webClient.post("deployments", data);
-        if (response.isErrorCode()) {
-            String errorMsg = ErrorParser.getErrorsFromResponse(response.getContent());
-            throw new IOException(String.format("Code %s - %n%s", response.getCode(), errorMsg));
-        }
-        return response.getContent();
-    }
-
-    /**
      * Get the url for a deployment given the following params;
      * @param projectId the id of the project to get the releases for
      * @param releaseVersion the version of the release to get
