@@ -20,8 +20,12 @@ public class OctopusDeployServer implements Serializable {
         return isDefault;
     }
 
+    protected transient String id;
+
     private String serverId;
     public String getServerId() {
+        if (id != null) return id;
+
         return serverId;
     }
 
