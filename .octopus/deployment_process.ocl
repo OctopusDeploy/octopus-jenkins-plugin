@@ -1,0 +1,44 @@
+step "run-a-script" {
+    name = "Publish package to Artifactory"
+
+    action "publish-package-to-artifactory" {
+        action_type = "Octopus.Script"
+        properties = {
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                artifactoryUrl="$(get_octopusvariable "ArtifactoryUrl")"
+                packageVersion="$(get_octopusvariable "Octopus.Action.Package[Octopus.Jenkins].PackageVersion")"
+                extractedPath="$(get_octopusvariable "Octopus.Action.Package[Octopus.Jenkins].ExtractedPath")"
+                creds="$(get_octopusvariable "ArtifactoryUsername"):$(get_octopusvariable "ArtifactoryPassword")"
+                publishVersionUrl="$artifactoryUrl/hudson/plugins/octopusdeploy/octopusdeploy/$packageVersion"
+                
+                for filePath in $extractedPath/*
+                do
+                    fileName=$(basename -- $filePath)
+                    publishFileUrl="$publishVersionUrl/$fileName"
+                    echo "Pushing $filePath to $publishFileUrl"
+                    echo '##octopus[stdout-verbose]'
+                    curl -fSs -X PUT \
+                        -u $creds \
+                        -T "$filePath" \
+                        $publishFileUrl
+                    echo $'\n'
+                    echo '##octopus[stdout-default]'
+                done
+            EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "Bash"
+        }
+        worker_pool = "hosted-ubuntu"
+
+        packages "Octopus.Jenkins" {
+            acquisition_location = "Server"
+            feed = "octopus-server-built-in"
+            package_id = "Octopus.Jenkins"
+            properties = {
+                Extract = "True"
+                Purpose = ""
+                SelectionMode = "immediate"
+            }
+        }
+    }
+}
