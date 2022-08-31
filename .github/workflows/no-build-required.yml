@@ -1,8 +1,10 @@
-name: 'build-test'
+name: Build and Test
+
 on:
   pull_request:
     path:
       - '**.md'
+
 jobs:
   test:
     runs-on: ubuntu-latest
