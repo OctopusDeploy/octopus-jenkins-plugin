@@ -489,7 +489,11 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
         } else {
             log.info("Package Configurations:");
             for (PackageConfiguration pc : packageConfigs) {
-                log.info("\t" + pc.getPackageName() + "\t" + pc.getPackageReferenceName() + "\tv" + pc.getPackageVersion());
+                if (StringUtils.isNotBlank(pkg.getPackageReferenceName())) {
+                    log.info("\t" + pc.getPackageName() + "\t" + pc.getPackageReferenceName() + "\tv" + pc.getPackageVersion());
+                } else {
+                    log.info("\t" + pc.getPackageName() + "\tv" + pc.getPackageVersion());
+                }
             }
         }
         log.info("=======================");

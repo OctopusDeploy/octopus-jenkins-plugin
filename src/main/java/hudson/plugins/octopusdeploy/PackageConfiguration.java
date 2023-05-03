@@ -46,6 +46,13 @@ public class PackageConfiguration extends AbstractDescribableImpl<PackageConfigu
         this.packageVersion = packageVersion.trim();
     }
     
+    @DataBoundConstructor
+    public PackageConfiguration(String packageName, String packageVersion) {
+        this.packageName = packageName.trim();
+        this.packageReferenceName = "";
+        this.packageVersion = packageVersion.trim();
+    }
+    
     @Extension
     public static class DescriptorImpl extends Descriptor<PackageConfiguration> {
         @Override
