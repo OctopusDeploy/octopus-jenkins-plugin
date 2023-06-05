@@ -5,11 +5,8 @@ import com.octopusdeploy.api.OctopusApi;
 import com.octopusdeploy.api.data.Environment;
 import com.octopusdeploy.api.data.Project;
 import com.octopusdeploy.api.data.*;
-import hudson.EnvVars;
-import hudson.Extension;
-import hudson.FilePath;
+import hudson.*;
 import hudson.FilePath.FileCallable;
-import hudson.Launcher;
 import hudson.model.*;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
 import hudson.remoting.VirtualChannel;
@@ -226,7 +223,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
     }
 
     @Override
-    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) {
+    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws AbortException {
         BuildListenerAdapter listenerAdapter = new BuildListenerAdapter(listener);
         Log log = new Log(listenerAdapter);
 
@@ -415,7 +412,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
         }
 
         if (!success) {
-            run.setResult(Result.FAILURE);
+            throw new AbortException("Failed to create release");
         }
     }
 

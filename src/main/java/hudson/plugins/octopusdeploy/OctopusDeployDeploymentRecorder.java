@@ -55,7 +55,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
     }
 
     @Override
-    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) {
+    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws AbortException {
         // This method deserves a refactor and cleanup.
         boolean success = true;
         BuildListenerAdapter listenerAdapter = new BuildListenerAdapter(listener);
@@ -153,7 +153,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         }
 
         if (!success) {
-            run.setResult(Result.FAILURE);
+            throw new AbortException("Failed to deploy");
         }
     }
 

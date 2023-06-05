@@ -1,10 +1,7 @@
 package hudson.plugins.octopusdeploy;
 
 import com.google.common.base.Splitter;
-import hudson.EnvVars;
-import hudson.Extension;
-import hudson.FilePath;
-import hudson.Launcher;
+import hudson.*;
 import hudson.model.*;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
 import hudson.util.FormValidation;
@@ -80,7 +77,7 @@ public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorderBuil
     }
 
     @Override
-    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) {
+    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws AbortException {
         boolean success = true;
         BuildListenerAdapter listenerAdapter = new BuildListenerAdapter(listener);
 
@@ -118,7 +115,7 @@ public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorderBuil
         }
 
         if (!success) {
-            run.setResult(Result.FAILURE);
+            throw new AbortException("Failed to pack");
         }
     }
 

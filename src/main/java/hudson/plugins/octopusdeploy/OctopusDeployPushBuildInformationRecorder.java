@@ -1,10 +1,7 @@
 package hudson.plugins.octopusdeploy;
 
 import com.google.common.base.Splitter;
-import hudson.EnvVars;
-import hudson.Extension;
-import hudson.FilePath;
-import hudson.Launcher;
+import hudson.*;
 import hudson.model.*;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
 import hudson.plugins.octopusdeploy.exception.ServerConfigurationNotFoundException;
@@ -89,7 +86,7 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
     }
 
     @Override
-    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) {
+    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws AbortException {
         boolean success = true;
         BuildListenerAdapter listenerAdapter = new BuildListenerAdapter(listener);
 
@@ -125,7 +122,7 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
         }
 
         if (!success) {
-            run.setResult(Result.FAILURE);
+            throw new AbortException("Failed to push build information");
         }
     }
 
