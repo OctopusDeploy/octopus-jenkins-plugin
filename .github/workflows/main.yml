@@ -2,11 +2,10 @@ name: Build and Test
 
 on:
   push:
-    branches:
-      - "**"
+    branches: [ main ]
     paths-ignore:
       - '**/*.md'
-
+  pull_request:
   release:
     types: [published]
 
