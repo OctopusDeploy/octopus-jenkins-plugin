@@ -1,5 +1,16 @@
 # Changelog
 
+## [4.0.0](https://github.com/OctopusDeploy/octopus-jenkins-plugin/compare/v3.1.9...v4.0.0) (2023-06-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* throw exception, update build ([#150](https://github.com/OctopusDeploy/octopus-jenkins-plugin/issues/150))
+
+### Bug Fixes
+
+* throw exception, update build ([#150](https://github.com/OctopusDeploy/octopus-jenkins-plugin/issues/150)) ([f800c03](https://github.com/OctopusDeploy/octopus-jenkins-plugin/commit/f800c0394c025c4ec9bc41e1a35668feaed177ab))
+
 ## [3.1.9](https://github.com/OctopusDeploy/octopus-jenkins-plugin/compare/v3.1.8...v3.1.9) (2022-08-31)
 
 
