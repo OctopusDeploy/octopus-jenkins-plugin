@@ -72,7 +72,7 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
     }
 
     @Override
-    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) {
+    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws AbortException {
         if (fileService == null)
         {
             Guice.createInjector(new ServiceModule()).injectMembers(this);
@@ -145,7 +145,7 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
         }
 
         if (!success) {
-            run.setResult(Result.FAILURE);
+            throw new AbortException("Failed to push");
         }
     }
 
