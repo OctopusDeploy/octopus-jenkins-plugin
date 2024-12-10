@@ -89,7 +89,7 @@ jobs:
           find . -wholename '**/octopusdeploy/${{ steps.git-version.outputs.nugetVersion }}/*' -print | zip -j ${{ github.workspace }}/Octopus.Jenkins.${{ steps.git-version.outputs.nugetVersion }}.zip -@  
           popd
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: Octopus.Jenkins.${{ steps.git-version.outputs.nugetVersion }}
           path: "Octopus.Jenkins.${{ steps.git-version.outputs.nugetVersion }}.zip"
