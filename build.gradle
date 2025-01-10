@@ -32,9 +32,6 @@ dependencies {
   implementation libs.apache.commons.collections4
   implementation libs.google.gson
   implementation libs.jenkins.workflow
-  // Logging dependencies
-  implementation libs.slf4j-api
-  implementation libs.logback-classic
 
   compileOnly libs.jetbrains.annotations
 
@@ -43,6 +40,7 @@ dependencies {
   testImplementation libs.mockito.jupiter
   testImplementation libs.mockito.inline
   testImplementation libs.bundles.octopus
+  testImplementation libs.testcontainers
 
   integrationTestImplementation libs.bundles.octopus
   integrationTestImplementation libs.bundles.junit
@@ -50,6 +48,7 @@ dependencies {
   integrationTestImplementation libs.mockito.inline
   integrationTestImplementation libs.mockito.jupiter
   integrationTestImplementation libs.apache.commons.text
+  integrationTestImplementation libs.testcontainers
 }
 
 jenkinsPlugin {
