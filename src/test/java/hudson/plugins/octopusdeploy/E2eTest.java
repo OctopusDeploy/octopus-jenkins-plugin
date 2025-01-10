@@ -41,6 +41,10 @@ public class E2eTest {
     @Rule
     public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
+    static {
+        System.setProperty("testcontainers.logs", "true");
+    }
+
     @Before
     public void setUp() throws IOException {
         // Configure Jenkins Octopus Server connection
