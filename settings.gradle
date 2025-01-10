@@ -36,6 +36,11 @@ dependencyResolutionManagement {
       alias('assertj-core').to('org.assertj', 'assertj-core').version('3.18.1')
       alias('mockito-inline').to('org.mockito', 'mockito-inline').version('3.+')
       alias('mockito-jupiter').to('org.mockito', 'mockito-junit-jupiter').version('4.+')
+
+      // Add Logging Dependencies
+      version('slf4j', '1.7.32')  // Adjust the version as needed
+      alias('slf4j-api').to('org.slf4j', 'slf4j-api').versionRef('slf4j')
+      alias('logback-classic').to('ch.qos.logback', 'logback-classic').version('1.2.6')  // or the latest version
     }
   }
 }
