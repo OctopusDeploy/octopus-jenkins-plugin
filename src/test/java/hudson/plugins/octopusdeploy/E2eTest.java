@@ -106,6 +106,7 @@ public class E2eTest {
                         .withEnv("ADMIN_PASSWORD", OCTOPUS_DEPLOY_SERVER_PASSWORD)
                         .withEnv("ADMIN_EMAIL", "octopusJavaSdkTest@octopus.com")
                         .withEnv("DB_CONNECTION_STRING", connectionStringBuilder.toString())
+                        .withEnv("LICENSE_BASE64", "test")
                         .withStartupTimeout(Duration.ofMinutes(10))
                         .withLogConsumer(outputFrame -> {
                             // Print the output from the container to stdout
