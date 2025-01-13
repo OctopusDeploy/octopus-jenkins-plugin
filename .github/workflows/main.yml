@@ -26,6 +26,16 @@ jobs:
       OCTOPUS_API_KEY: ${{ secrets.OCTOPUS_API_KEY }}
       OCTOPUS_HOST: ${{ secrets.OCTOPUS_URL }}
       OCTOPUS_SPACE: Integrations
+      # SQL Server settings
+      MS_SQL_IMAGE: mcr.microsoft.com/mssql/server
+      MS_SQL_CONTAINER_NETWORK_ALIAS: sql-server
+      SA_PASSWORD: Password01!
+      MS_SQL_PORT: 1433
+      # Octopus Deploy settings
+      OCTOPUS_SERVER_IMAGE: docker.packages.octopushq.com/octopusdeploy/octopusdeploy
+      OCTOPUS_SERVER_DEPLOY_PORT: 8080
+      OCTOPUS_SERVER_USERNAME: admin
+      OCTOPUS_DEPLOY_SERVER_PASSWORD: Password01!
 
     steps:
       - name: Checkout Code
@@ -53,27 +63,6 @@ jobs:
             echo "Version: ${GITVERSION_FULLSEMVER}"
           fi
 
-      # Set up Go for container
-      - name: Set up Go
-        uses: actions/setup-go@v2
-
-      # Start container setup
-      - name: Container Setup
-        run: go test -timeout 0 ./... -createSharedContainer=true
-        env:
-          LICENSE: ${{ secrets.OCTOPUS_LICENSE }}
-          GIT_USERNAME: x-access-token
-          OCTODISABLEOCTOCONTAINERLOGGING: true
-          OCTOTESTSKIPINIT: true
-          GOMAXPROCS: 1
-          OCTOTESTVERSION: latest
-          OCTOTESTIMAGEURL: docker.packages.octopushq.com/octopusdeploy/octopusdeploy
-          OCTOTESTRETRYCOUNT: 1
-
-      # Wait for container to be ready
-      - name: Wait for container
-        run: |
-          timeout 300s bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:8080/api/serverstatus/health)" != "200" ]]; do echo "Waiting for server..."; sleep 5; done' || false
 
       - name: Install Octopus CLI
         uses: OctopusDeploy/install-octopus-cli-action@v1
@@ -89,6 +78,52 @@ jobs:
         with:
           java-version: "8"
           distribution: "adopt"
+
+      - name: Create Docker network
+        run: docker network create octopus-network
+
+      - name: Start SQL Server container
+        run: |
+          docker run -d \
+            --name mssql \
+            --network octopus-network \
+            --network-alias ${{ env.MS_SQL_CONTAINER_NETWORK_ALIAS }} \
+            -p ${{ env.MS_SQL_PORT }}:1433 \
+            -e "SA_PASSWORD=${{ env.SA_PASSWORD }}" \
+            -e "MSSQL_TCP_PORT=${{ env.MS_SQL_PORT }}" \
+            -e "ACCEPT_EULA=Y" \
+            -e "MSSQL_PID=Developer" \
+            ${{ env.MS_SQL_IMAGE }}
+
+      - name: Wait for SQL Server to be ready
+        run: |
+          timeout 300 bash -c 'until docker logs mssql 2>&1 | grep -q "SQL Server is now ready for client connections"; do
+            echo "Waiting for SQL Server to be ready..."
+            sleep 5
+          done' || false
+
+      - name: Start Octopus Deploy container
+        run: |
+          CONNECTION_STRING="Server=${{ env.MS_SQL_CONTAINER_NETWORK_ALIAS }},${{ env.MS_SQL_PORT }};Database=OctopusDeploy;User=sa;Password=${{ env.SA_PASSWORD }}"
+          
+          docker run -d \
+            --name octopus-server \
+            --network octopus-network \
+            --network-alias OCTOPUS_SERVER \
+            -p ${{ env.OCTOPUS_SERVER_DEPLOY_PORT }}:8080 \
+            -e ACCEPT_EULA=Y \
+            -e ADMIN_USERNAME=${{ env.OCTOPUS_SERVER_USERNAME }} \
+            -e ADMIN_PASSWORD=${{ env.OCTOPUS_DEPLOY_SERVER_PASSWORD }} \
+            -e DB_CONNECTION_STRING="$CONNECTION_STRING" \
+            -e OCTOPUS_LICENSE=${{ secrets.OCTOPUS_LICENSE }} \
+            ${{ env.OCTOPUS_SERVER_IMAGE }}
+
+      - name: Wait for Octopus Deploy to be ready
+        run: |
+          timeout 300 bash -c 'until docker logs octopus-server 2>&1 | grep -q "Web server is ready to process requests"; do
+            echo "Waiting for Octopus Deploy to be ready..."
+            sleep 5
+          done' || false
 
       - name: Build, Execute Unit Tests & E2E Tests
         run: ./gradlew build test -Pversion=${{ steps.git-version.outputs.nugetVersion }}
