@@ -125,6 +125,24 @@ jobs:
             sleep 5
           done' || false
 
+      - name: Get API Key
+        id: get-api-key
+        run: |
+          # Login and save cookies
+          curl -c cookies.txt -X POST http://localhost:8080/api/users/login \
+            -H "Content-Type: application/json" \
+            -d "{\"Username\":\"${{ env.OCTOPUS_SERVER_USERNAME }}\",\"Password\":\"${{ env.OCTOPUS_DEPLOY_SERVER_PASSWORD }}\"}"
+
+          # Get current user ID
+          USER_ID=$(curl -b cookies.txt http://localhost:8080/api/users/me | jq -r '.Id')
+
+          # Create API key
+          API_KEY=$(curl -b cookies.txt -X POST "http://localhost:8080/api/users/${USER_ID}/apikeys" \
+            -H "Content-Type: application/json" \
+            -d "{\"Purpose\":\"GitHub Actions Testing\",\"ExpiresIn\":\"1.00:00:00\"}" | jq -r '.ApiKey')
+
+          echo "::set-output name=api-key::$API_KEY"
+
       - name: Build, Execute Unit Tests & E2E Tests
         run: ./gradlew build test -Pversion=${{ steps.git-version.outputs.nugetVersion }} --info --stacktrace
         env:
@@ -132,6 +150,7 @@ jobs:
           OCTOPUS_SDK_AT_USE_EXISTING_SERVER: true
           OCTOPUS_CLI_PATH: ${{ steps.cli-path.outputs.install-path }}
           OCTOPUS_SERVER_URL: http://localhost:8080
+          OCTOPUS_SERVER_API_KEY: ${{ steps.get-api-key.outputs.api-key }}
 
       - name: Execute Integration Tests
         run: ./gradlew integrationTest -Pversion=${{ steps.git-version.outputs.nugetVersion }}
@@ -139,6 +158,7 @@ jobs:
           OCTOPUS_LICENSE: ${{ secrets.OCTOPUS_LICENSE }}
           OCTOPUS_SDK_AT_USE_EXISTING_SERVER: true
           OCTOPUS_SERVER_URL: http://localhost:8080
+          OCTOPUS_SERVER_API_KEY: ${{ steps.get-api-key.outputs.api-key }}
 
       - name: Create Plugin Zip
         id: create-package
