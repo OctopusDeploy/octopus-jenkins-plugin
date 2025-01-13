@@ -129,34 +129,21 @@ jobs:
         id: get-api-key
         run: |
           # Login and save cookies
-          curl -c cookies.txt -X POST http://localhost:8080/api/users/login \
+          curl -c cookies.txt -b cookies.txt -X POST http://localhost:8080/api/users/login \
           -H "Content-Type: application/json" \
           -d "{\"Username\":\"${{ env.OCTOPUS_SERVER_USERNAME }}\",\"Password\":\"${{ env.OCTOPUS_DEPLOY_SERVER_PASSWORD }}\"}"
           
-          CSRF_TOKEN=$(curl -c cookies.txt -X POST http://localhost:8080/api/users/login \
-          -H "Content-Type: application/json" \
-          -d "{\"Username\":\"${{ env.OCTOPUS_SERVER_USERNAME }}\",\"Password\":\"${{ env.OCTOPUS_DEPLOY_SERVER_PASSWORD }}\"}" \
-          -v 2>&1 | grep -i "X-Octopus-Csrf-Token:" | cut -d' ' -f3)
-          echo "CSRF Token: $CSRF_TOKEN"
+          CSRF_TOKEN=$(grep 'Octopus-Csrf-Token' cookies.txt | awk '{print $7}')
           echo "Creating API key..."
           
-          # Single API key creation with verbose output
-          echo "Creating API key..."
-          API_KEY_RESPONSE=$(curl -v -b cookies.txt -X POST "http://localhost:8080/api/users/Users-1/apikeys" \
+          API_KEY_RESPONSE=$(curl -b cookies.txt -X POST "http://localhost:8080/api/users/Users-1/apikeys" \
           -H "Content-Type: application/json" \
           -H "Accept: application/json" \
           -H "X-Octopus-Csrf-Token: $CSRF_TOKEN" \
-          -d "{\"Purpose\":\"GitHub Actions Testing\",\"ExpiresIn\":\"1.00:00:00\"}")
-          
-          # Debug: Print full API key response
-          echo "Full API Key Response:"
-          echo "$API_KEY_RESPONSE"
+          -d '{"Purpose":"GitHub Actions Testing","ExpiresIn":"1.00:00:00"}')
           
            # Extract API key
-          API_KEY=$(echo "$API_KEY_RESPONSE" | jq -r '.ApiKey // empty')
-          
-          echo "::set-output name=api-key::$API_KEY"
-
+          API_KEY=$(echo "$API_KEY_RESPONSE" | grep -o '"ApiKey": *"[^"]*"' | sed 's/"ApiKey": *"\([^"]*\)"/\1/')
       - name: Build, Execute Unit Tests & E2E Tests
         run: ./gradlew build test -Pversion=${{ steps.git-version.outputs.nugetVersion }} --info --stacktrace
         env:
