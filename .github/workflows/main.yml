@@ -130,17 +130,20 @@ jobs:
         run: |
           # Login and save cookies
           curl -c cookies.txt -X POST http://localhost:8080/api/users/login \
-            -H "Content-Type: application/json" \
-            -d "{\"Username\":\"${{ env.OCTOPUS_SERVER_USERNAME }}\",\"Password\":\"${{ env.OCTOPUS_DEPLOY_SERVER_PASSWORD }}\"}"
-
-          # Get current user ID
-          USER_ID=$(curl -b cookies.txt http://localhost:8080/api/users/me | jq -r '.Id')
-
-          # Create API key
-          API_KEY=$(curl -b cookies.txt -X POST "http://localhost:8080/api/users/${USER_ID}/apikeys" \
-            -H "Content-Type: application/json" \
-            -d "{\"Purpose\":\"GitHub Actions Testing\",\"ExpiresIn\":\"1.00:00:00\"}" | jq -r '.ApiKey')
-
+          -H "Content-Type: application/json" \
+          -d "{\"Username\":\"${{ env.OCTOPUS_SERVER_USERNAME }}\",\"Password\":\"${{ env.OCTOPUS_DEPLOY_SERVER_PASSWORD }}\"}"
+          
+          echo "Creating API key..."
+          # Create API key with full response output
+          curl -v -b cookies.txt -X POST "http://localhost:8080/api/users/Users-1/apikeys" \
+          -H "Content-Type: application/json" \
+          -H "Accept: application/json" \
+          -d "{\"Purpose\":\"GitHub Actions Testing\",\"ExpiresIn\":\"1.00:00:00\"}" | jq '.'
+      
+          API_KEY=$(curl -b cookies.txt -X POST "http://localhost:8080/api/users/Users-1/apikeys" \
+          -H "Content-Type: application/json" \
+          -d "{\"Purpose\":\"GitHub Actions Testing\",\"ExpiresIn\":\"1.00:00:00\"}" | jq -r '.ApiKey')
+          
           echo "::set-output name=api-key::$API_KEY"
 
       - name: Build, Execute Unit Tests & E2E Tests
