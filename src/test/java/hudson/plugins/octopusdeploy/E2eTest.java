@@ -67,6 +67,15 @@ public class E2eTest {
     public static com.octopus.testsupport.DockerisedOctopusDeployServer createOctopusServer() throws IOException {
 
         final Network network = Network.newNetwork();
+
+        // Verbose logging of environment and configuration
+        System.out.println("=== DIAGNOSTIC INFORMATION ===");
+        System.out.println("OCTOPUS_LICENSE: " +
+                (System.getenv("OCTOPUS_LICENSE") != null ? "Present" : "NOT SET"));
+        System.out.println("OCTOPUS_SERVER_IMAGE: " + OCTOPUS_SERVER_IMAGE);
+        System.out.println("MS_SQL_IMAGE: " + MS_SQL_IMAGE);
+        System.out.println("=== END DIAGNOSTIC INFORMATION ===");
+
         final GenericContainer<?> msSqlContainer =
                 new GenericContainer<>(DockerImageName.parse(MS_SQL_IMAGE))
                         .withExposedPorts(1433)
@@ -124,7 +133,7 @@ public class E2eTest {
                                 }
                             }
                         })
-                        .waitingFor(Wait.forLogMessage(".*Starting Server.*", 1));
+                        .waitingFor(Wait.forLogMessage(".*Web server is ready to process requests.*", 1));
 
         try {
             octopusDeployServerContainer.start();
