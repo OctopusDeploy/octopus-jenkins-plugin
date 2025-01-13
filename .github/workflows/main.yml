@@ -107,16 +107,16 @@ jobs:
           CONNECTION_STRING="Server=${{ env.MS_SQL_CONTAINER_NETWORK_ALIAS }},${{ env.MS_SQL_PORT }};Database=OctopusDeploy;User=sa;Password=${{ env.SA_PASSWORD }}"
           
           docker run -d \
-            --name octopus-server \
-            --network octopus-network \
-            --network-alias OCTOPUS_SERVER \
-            -p ${{ env.OCTOPUS_SERVER_DEPLOY_PORT }}:8080 \
-            -e ACCEPT_EULA=Y \
-            -e ADMIN_USERNAME=${{ env.OCTOPUS_SERVER_USERNAME }} \
-            -e ADMIN_PASSWORD=${{ env.OCTOPUS_DEPLOY_SERVER_PASSWORD }} \
-            -e DB_CONNECTION_STRING="$CONNECTION_STRING" \
-            -e OCTOPUS_LICENSE=${{ secrets.OCTOPUS_LICENSE }} \
-            ${{ env.OCTOPUS_SERVER_IMAGE }}
+          --name octopus-server \
+          --network octopus-network \
+          --network-alias OCTOPUS_SERVER \
+          -p ${{ env.OCTOPUS_SERVER_DEPLOY_PORT }}:8080 \
+          -e "ACCEPT_EULA=Y" \
+          -e "ADMIN_USERNAME=${{ env.OCTOPUS_SERVER_USERNAME }}" \
+          -e "ADMIN_PASSWORD=${{ env.OCTOPUS_DEPLOY_SERVER_PASSWORD }}" \
+          -e "DB_CONNECTION_STRING=${CONNECTION_STRING}" \
+          -e "OCTOPUS_LICENSE=${{ secrets.OCTOPUS_LICENSE }}" \
+          "${{ env.OCTOPUS_SERVER_IMAGE }}"
 
       - name: Wait for Octopus Deploy to be ready
         run: |
