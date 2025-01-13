@@ -137,18 +137,23 @@ jobs:
           -H "Content-Type: application/json" \
           -d "{\"Username\":\"${{ env.OCTOPUS_SERVER_USERNAME }}\",\"Password\":\"${{ env.OCTOPUS_DEPLOY_SERVER_PASSWORD }}\"}" \
           -v 2>&1 | grep -i "X-Octopus-Csrf-Token:" | cut -d' ' -f3)
-          
+          echo "CSRF Token: $CSRF_TOKEN"
           echo "Creating API key..."
-          # Create API key with full response output
-          curl -v -b cookies.txt -X POST "http://localhost:8080/api/users/Users-1/apikeys" \
+          
+          # Single API key creation with verbose output
+          echo "Creating API key..."
+          API_KEY_RESPONSE=$(curl -v -b cookies.txt -X POST "http://localhost:8080/api/users/Users-1/apikeys" \
           -H "Content-Type: application/json" \
           -H "Accept: application/json" \
-          -d "{\"Purpose\":\"GitHub Actions Testing\",\"ExpiresIn\":\"1.00:00:00\"}" | jq '.'
-      
-          API_KEY=$(curl -b cookies.txt -X POST "http://localhost:8080/api/users/Users-1/apikeys" \
-          -H "Content-Type: application/json" \
           -H "X-Octopus-Csrf-Token: $CSRF_TOKEN" \
-          -d "{\"Purpose\":\"GitHub Actions Testing\",\"ExpiresIn\":\"1.00:00:00\"}" | jq -r '.ApiKey')
+          -d "{\"Purpose\":\"GitHub Actions Testing\",\"ExpiresIn\":\"1.00:00:00\"}")
+          
+          # Debug: Print full API key response
+          echo "Full API Key Response:"
+          echo "$API_KEY_RESPONSE"
+          
+           # Extract API key
+          API_KEY=$(echo "$API_KEY_RESPONSE" | jq -r '.ApiKey // empty')
           
           echo "::set-output name=api-key::$API_KEY"
 
