@@ -126,7 +126,7 @@ jobs:
           done' || false
 
       - name: Build, Execute Unit Tests & E2E Tests
-        run: ./gradlew build test -Pversion=${{ steps.git-version.outputs.nugetVersion }}
+        run: ./gradlew build test -Pversion=${{ steps.git-version.outputs.nugetVersion }} --info --stacktrace
         env:
           OCTOPUS_LICENSE: ${{ secrets.OCTOPUS_LICENSE }}
           OCTOPUS_SDK_AT_USE_EXISTING_SERVER: true
