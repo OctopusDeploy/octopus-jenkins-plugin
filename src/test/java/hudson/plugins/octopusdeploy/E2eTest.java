@@ -104,9 +104,10 @@ public class E2eTest {
                         .withEnv("ACCEPT_EULA", "Y")
                         .withEnv("ADMIN_USERNAME", "admin")
                         .withEnv("ADMIN_PASSWORD", OCTOPUS_DEPLOY_SERVER_PASSWORD)
-//                        .withEnv("ADMIN_EMAIL", "octopusJavaSdkTest@octopus.com")
+                        .withEnv("ADMIN_EMAIL", "octopusJavaSdkTest@octopus.com")
                         .withEnv("DB_CONNECTION_STRING", connectionStringBuilder.toString())
                         .withEnv("LICENSE_BASE64", "test")
+                        .withEnv("ADMIN_API_KEY", "")
                         .withStartupTimeout(Duration.ofMinutes(10))
                         .withLogConsumer(outputFrame -> {
                             // Print the output from the container to stdout
