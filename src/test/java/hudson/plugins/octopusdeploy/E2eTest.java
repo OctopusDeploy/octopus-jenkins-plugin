@@ -83,7 +83,7 @@ public class E2eTest {
 
         // OctopusDeployPushBuildInformationRecorder - Build info pushed to Octopus
         assertThat(space.buildInformation().getAll().stream().map(BuildInformation::getProperties))
-                .flatExtracting("packageId", "version").contains("PackageId", "2.0.0");
+                .flatExtracting("packageId", "version").contains("PackageId", "1.0.0");
     }
 
     private String getProjectConfiguration() throws URISyntaxException, IOException {
