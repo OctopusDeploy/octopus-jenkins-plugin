@@ -124,7 +124,7 @@ public class E2eTest {
                                 }
                             }
                         })
-                        .waitingFor(Wait.forLogMessage(".*Web server is ready to process requests.*", 1));
+                        .waitingFor(Wait.forLogMessage(".*Starting Server.*", 1));
 
         try {
             octopusDeployServerContainer.start();
