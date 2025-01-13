@@ -108,9 +108,21 @@ public class E2eTest {
                         .withEnv("DB_CONNECTION_STRING", connectionStringBuilder.toString())
                         .withEnv("OCTOPUS_LICENSE", System.getenv("OCTOPUS_LICENSE"))
                         .withStartupTimeout(Duration.ofMinutes(10))
+//                        .withLogConsumer(outputFrame -> {
+//                            // Print the output from the container to stdout
+//                            System.out.println("TestContainerLogDocker: " + outputFrame.getUtf8String());
+//                        })
                         .withLogConsumer(outputFrame -> {
-                            // Print the output from the container to stdout
-                            System.out.println("TestContainerLogDocker: " + outputFrame.getUtf8String());
+                            String logMessage = outputFrame.getUtf8String().trim();
+                            if (!logMessage.isEmpty()) {
+                                System.out.println("TestContainerLogDocker: " + logMessage);
+
+                                // Additional log tracking
+                                if (logMessage.contains("error") || logMessage.contains("Error") ||
+                                        logMessage.contains("exception") || logMessage.contains("Exception")) {
+                                    System.err.println("POTENTIAL ERROR LOG: " + logMessage);
+                                }
+                            }
                         })
                         .waitingFor(Wait.forLogMessage(".*Web server is ready to process requests.*", 1));
 
