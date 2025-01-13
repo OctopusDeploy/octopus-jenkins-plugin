@@ -144,7 +144,7 @@ jobs:
           
            # Extract API key
           API_KEY=$(echo "$API_KEY_RESPONSE" | grep -o '"ApiKey": *"[^"]*"' | sed 's/"ApiKey": *"\([^"]*\)"/\1/')
-          echo "DEBUG API CREATE $API_KEY"
+          echo "api-key=$API_KEY" >> $GITHUB_OUTPUT
 
       - name: Build, Execute Unit Tests & E2E Tests
         run: |
