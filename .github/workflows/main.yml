@@ -133,6 +133,11 @@ jobs:
           -H "Content-Type: application/json" \
           -d "{\"Username\":\"${{ env.OCTOPUS_SERVER_USERNAME }}\",\"Password\":\"${{ env.OCTOPUS_DEPLOY_SERVER_PASSWORD }}\"}"
           
+          CSRF_TOKEN=$(curl -c cookies.txt -X POST http://localhost:8080/api/users/login \
+          -H "Content-Type: application/json" \
+          -d "{\"Username\":\"${{ env.OCTOPUS_SERVER_USERNAME }}\",\"Password\":\"${{ env.OCTOPUS_DEPLOY_SERVER_PASSWORD }}\"}" \
+          -v 2>&1 | grep -i "X-Octopus-Csrf-Token:" | cut -d' ' -f3)
+          
           echo "Creating API key..."
           # Create API key with full response output
           curl -v -b cookies.txt -X POST "http://localhost:8080/api/users/Users-1/apikeys" \
@@ -142,6 +147,7 @@ jobs:
       
           API_KEY=$(curl -b cookies.txt -X POST "http://localhost:8080/api/users/Users-1/apikeys" \
           -H "Content-Type: application/json" \
+          -H "X-Octopus-Csrf-Token: $CSRF_TOKEN" \
           -d "{\"Purpose\":\"GitHub Actions Testing\",\"ExpiresIn\":\"1.00:00:00\"}" | jq -r '.ApiKey')
           
           echo "::set-output name=api-key::$API_KEY"
