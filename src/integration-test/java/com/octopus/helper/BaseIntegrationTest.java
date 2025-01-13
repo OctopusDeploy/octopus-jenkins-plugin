@@ -1,6 +1,7 @@
 package com.octopus.helper;
 
 import com.google.common.collect.Sets;
+import com.octopus.openapi.model.TeamResource;
 import com.octopus.sdk.Repository;
 import com.octopus.sdk.api.SpaceOverviewApi;
 import com.octopus.sdk.api.UserApi;
@@ -16,6 +17,7 @@ import com.octopus.sdk.model.lifecycle.LifecycleResource;
 import com.octopus.sdk.model.project.ProjectResource;
 import com.octopus.sdk.model.projectgroup.ProjectGroupResource;
 import com.octopus.sdk.model.release.ReleaseResource;
+import com.octopus.sdk.model.space.SpaceOverviewResource;
 import com.octopus.sdk.model.space.SpaceOverviewWithLinks;
 import com.octopus.sdk.model.tag.TagResource;
 import com.octopus.sdk.model.tagset.TagSetResource;
@@ -82,9 +84,12 @@ public class BaseIntegrationTest extends BaseOctopusServerEnabledTest {
         final Set<String> spaceManagers =
                 Sets.newHashSet(UserApi.create(client).getCurrentUser().getProperties().getId());
         final Repository repository = new Repository(client);
+        SpaceOverviewResource spaceOverviewResource = new SpaceOverviewWithLinks(generateSpaceName(testInfo.getDisplayName()), spaceManagers);
+        final Set<String> spaceManagersTeams = Sets.newHashSet("teams-everyone");
+        spaceOverviewResource.setSpaceManagersTeams(spaceManagersTeams);
         space = repository
                 .spaces()
-                .create(new SpaceOverviewWithLinks(generateSpaceName(testInfo.getDisplayName()), spaceManagers));
+                .create(spaceOverviewResource);
         initTestEnvironment();
     }
 
