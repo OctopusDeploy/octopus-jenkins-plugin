@@ -86,6 +86,13 @@ public class BaseIntegrationTest extends BaseOctopusServerEnabledTest {
         SpaceOverviewResource spaceOverviewResource = new SpaceOverviewWithLinks(generateSpaceName(testInfo.getDisplayName()), spaceManagers);
         final Set<String> spaceManagersTeams = Sets.newHashSet("teams-everyone");
         spaceOverviewResource.setSpaceManagersTeams(spaceManagersTeams);
+        repository.spaces().getAll().forEach(space -> {
+            try {
+                repository.spaces().delete(space.getProperties());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
         space = repository
                 .spaces()
                 .create(spaceOverviewResource);

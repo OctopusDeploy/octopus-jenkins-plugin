@@ -99,13 +99,13 @@ public class E2eTest {
                 "<outputPath>" + temporaryFolder.getRoot() + "</outputPath>");
     }
 
-    @After
-    public void cleanUp() throws IOException {
-        SpaceOverviewApi spaceOverviewApi = SpaceOverviewApi.create(client);
-        if (space != null) {
-            space.getProperties().setTaskQueueStopped(true);
-            spaceOverviewApi.update(space.getProperties());
-            spaceOverviewApi.delete(space.getProperties());
-        }
-    }
+//    @After
+//    public void cleanUp() throws IOException {
+//        SpaceOverviewApi spaceOverviewApi = SpaceOverviewApi.create(client);
+//        if (space != null) {
+//            space.getProperties().setTaskQueueStopped(true);
+//            spaceOverviewApi.update(space.getProperties());
+//            spaceOverviewApi.delete(space.getProperties());
+//        }
+//    }
 }
