@@ -63,7 +63,6 @@ jobs:
             echo "Version: ${GITVERSION_FULLSEMVER}"
           fi
 
-
       - name: Install Octopus CLI
         uses: OctopusDeploy/install-octopus-cli-action@v1
         with:
@@ -147,9 +146,7 @@ jobs:
           echo "api-key=$API_KEY" >> $GITHUB_OUTPUT
 
       - name: Build, Execute Unit Tests & E2E Tests
-        run: |
-          echo "DEBUG API $OCTOPUS_SERVER_API_KEY"
-          ./gradlew build test -Pversion=${{ steps.git-version.outputs.nugetVersion }} --info --stacktrace
+        run: ./gradlew build test -Pversion=${{ steps.git-version.outputs.nugetVersion }}
         env:
           OCTOPUS_LICENSE: ${{ secrets.OCTOPUS_LICENSE }}
           OCTOPUS_SDK_AT_USE_EXISTING_SERVER: true
@@ -158,7 +155,7 @@ jobs:
           OCTOPUS_SERVER_API_KEY: ${{ steps.get-api-key.outputs.api-key }}
 
       - name: Execute Integration Tests
-        run: ./gradlew integrationTest -Pversion=${{ steps.git-version.outputs.nugetVersion }}
+        run: ./gradlew integrationTest -Pversion=${{ steps.git-version.outputs.nugetVersion }} --info --stacktrace
         env:
           OCTOPUS_LICENSE: ${{ secrets.OCTOPUS_LICENSE }}
           OCTOPUS_SDK_AT_USE_EXISTING_SERVER: true
