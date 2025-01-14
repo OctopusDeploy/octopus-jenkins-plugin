@@ -1,7 +1,6 @@
 package com.octopus.helper;
 
 import com.google.common.collect.Sets;
-import com.octopus.openapi.model.TeamResource;
 import com.octopus.sdk.Repository;
 import com.octopus.sdk.api.SpaceOverviewApi;
 import com.octopus.sdk.api.UserApi;
