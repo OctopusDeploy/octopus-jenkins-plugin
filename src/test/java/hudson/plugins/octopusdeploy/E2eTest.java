@@ -7,6 +7,7 @@ import com.octopus.sdk.http.OctopusClient;
 import com.octopus.testsupport.OctopusDeployServerFactory;
 import hudson.model.FreeStyleProject;
 import okhttp3.OkHttpClient;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -34,6 +35,7 @@ public class E2eTest {
 
     private final com.octopus.testsupport.OctopusDeployServer server = OctopusDeployServerFactory.create();
     private Space space;
+    private OctopusClient client;
 
     @Rule
     public final JenkinsRule jenkinsRule = new JenkinsRule();
@@ -60,7 +62,7 @@ public class E2eTest {
         cliDescriptor.save();
 
         // Get Space and configure Octopus server for tests
-        final OctopusClient client =
+        client =
                 new OctopusClient(new OkHttpClient(), new URL(server.getOctopusUrl()), server.getApiKey());
         space = new Repository(client).spaces().getAll().get(0);
     }
@@ -94,6 +96,13 @@ public class E2eTest {
 
         return rawConfig.replace("<outputPath>.</outputPath>",
                 "<outputPath>" + temporaryFolder.getRoot() + "</outputPath>");
+    }
+
+    @After
+    public void cleanUp() throws IOException {
+        if (space != null) {
+            new Repository(client).spaces().delete(space.getProperties().getId());
+        }
     }
 
 }
