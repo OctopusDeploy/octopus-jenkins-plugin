@@ -1,6 +1,7 @@
 package hudson.plugins.octopusdeploy;
 
 import com.octopus.sdk.Repository;
+import com.octopus.sdk.api.SpaceOverviewApi;
 import com.octopus.sdk.domain.BuildInformation;
 import com.octopus.sdk.domain.Space;
 import com.octopus.sdk.http.OctopusClient;
@@ -100,9 +101,11 @@ public class E2eTest {
 
     @After
     public void cleanUp() throws IOException {
+        SpaceOverviewApi spaceOverviewApi = SpaceOverviewApi.create(client);
         if (space != null) {
-            new Repository(client).spaces().delete(space.getProperties().getId());
+            space.getProperties().setTaskQueueStopped(true);
+            spaceOverviewApi.update(space.getProperties());
+            spaceOverviewApi.delete(space.getProperties());
         }
     }
-
 }
