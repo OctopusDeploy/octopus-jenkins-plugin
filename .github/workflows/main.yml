@@ -114,7 +114,7 @@ jobs:
           -e "ADMIN_USERNAME=${{ env.OCTOPUS_SERVER_USERNAME }}" \
           -e "ADMIN_PASSWORD=${{ env.OCTOPUS_DEPLOY_SERVER_PASSWORD }}" \
           -e "DB_CONNECTION_STRING=${CONNECTION_STRING}" \
-          -e "OCTOPUS_LICENSE=${{ secrets.OCTOPUS_SERVER_BASE64_LICENSE }}" \
+          -e "OCTOPUS_SERVER_BASE64_LICENSE=${{ secrets.OCTOPUS_SERVER_BASE64_LICENSE }}" \
           "${{ env.OCTOPUS_SERVER_IMAGE }}"
 
       - name: Wait for Octopus Deploy to be ready
