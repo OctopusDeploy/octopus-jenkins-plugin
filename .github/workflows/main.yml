@@ -147,37 +147,50 @@ jobs:
 
       - name: Check Octopus License
         run: |
-          echo "::debug::Checking Octopus license usage..."
+          echo "Checking Octopus license usage..."
+          
+          # Check required environment variables
+          if [ -z "$OCTOPUS_SERVER_API_KEY" ]; then
+            echo "::error::OCTOPUS_SERVER_API_KEY is not set"
+            exit 1
+          fi
           
           # Make API request to check license
-          RESPONSE=$(curl -s -H "X-Octopus-ApiKey: ${{ steps.get-api-key.outputs.api-key }}" \
+          RESPONSE=$(curl -s -f \
+                        -H "X-Octopus-ApiKey: $OCTOPUS_SERVER_API_KEY" \
                         -H "Accept: application/json" \
-                        http://localhost:8080/api/licenses/licenses-current-usage)
+                        "http://localhost:${OCTOPUS_SERVER_DEPLOY_PORT}/api/licenses/licenses-current-usage")
           
           # Check if curl request was successful
           if [ $? -ne 0 ]; then
-            echo "::error::Failed to make API request"
+            echo "::error::Failed to make API request to Octopus server"
+            exit 1
+          fi
+          
+          # Validate JSON response
+          if ! echo "$RESPONSE" | jq empty 2>/dev/null; then
+            echo "::error::Invalid JSON response from server"
             exit 1
           fi
           
           # Parse and display license information
-          IS_PTM=$(echo $RESPONSE | jq -r '.IsPtm')
-          echo "::debug::License Type: $([ "$IS_PTM" == "true" ] && echo "PTM" || echo "Standard")"
+          IS_PTM=$(echo "$RESPONSE" | jq -r '.IsPtm')
+          echo "License Type: $([ "$IS_PTM" == "true" ] && echo "PTM" || echo "Standard")"
           
           # Check each limit
           echo "$RESPONSE" | jq -c '.Limits[]' | while read -r limit; do
-            NAME=$(echo $limit | jq -r '.Name')
-            CURRENT_USAGE=$(echo $limit | jq -r '.CurrentUsage')
-            IS_UNLIMITED=$(echo $limit | jq -r '.IsUnlimited')
-            EFFECTIVE_LIMIT=$(echo $limit | jq -r '.EffectiveLimit')
+            NAME=$(echo "$limit" | jq -r '.Name')
+            CURRENT_USAGE=$(echo "$limit" | jq -r '.CurrentUsage')
+            IS_UNLIMITED=$(echo "$limit" | jq -r '.IsUnlimited')
+            EFFECTIVE_LIMIT=$(echo "$limit" | jq -r '.EffectiveLimit')
           
-            echo "::debug::Checking $NAME - Current Usage: $CURRENT_USAGE"
+            echo "Checking $NAME - Current Usage: $CURRENT_USAGE"
           
-            if [ "$IS_UNLIMITED" != "true" ] && [ $CURRENT_USAGE -gt 0 ]; then
+            if [ "$IS_UNLIMITED" != "true" ] && [ "$CURRENT_USAGE" -gt 0 ]; then
               USAGE_PERCENTAGE=$(awk "BEGIN {printf \"%.2f\", ($CURRENT_USAGE / $EFFECTIVE_LIMIT) * 100}")
-              echo "::debug::$NAME usage: $USAGE_PERCENTAGE%"
+              echo "$NAME usage: $USAGE_PERCENTAGE%"
           
-              if [ $(echo "$USAGE_PERCENTAGE > 80" | bc -l) -eq 1 ]; then
+              if [ "$(echo "$USAGE_PERCENTAGE > 80" | bc -l)" -eq 1 ]; then
                 echo "::warning::High usage detected for $NAME: $USAGE_PERCENTAGE%"
               fi
             fi
@@ -185,18 +198,20 @@ jobs:
           
           # Check spaces usage
           echo "$RESPONSE" | jq -c '.SpacesUsage[]' | while read -r space; do
-            SPACE_NAME=$(echo $space | jq -r '.SpaceName')
-            PROJECTS_COUNT=$(echo $space | jq -r '.ProjectsCount')
-            TENANTS_COUNT=$(echo $space | jq -r '.TenantsCount')
-            MACHINES_COUNT=$(echo $space | jq -r '.MachinesCount')
+            SPACE_NAME=$(echo "$space" | jq -r '.SpaceName')
+            PROJECTS_COUNT=$(echo "$space" | jq -r '.ProjectsCount')
+            TENANTS_COUNT=$(echo "$space" | jq -r '.TenantsCount')
+            MACHINES_COUNT=$(echo "$space" | jq -r '.MachinesCount')
           
-            echo "::debug::Space: $SPACE_NAME"
-            echo "::debug::Projects: $PROJECTS_COUNT"
-            echo "::debug::Tenants: $TENANTS_COUNT"
-            echo "::debug::Machines: $MACHINES_COUNT"
+            echo "Space: $SPACE_NAME"
+            echo "  Projects: $PROJECTS_COUNT"
+            echo "  Tenants: $TENANTS_COUNT"
+            echo "  Machines: $MACHINES_COUNT"
           done
           
-          echo "::debug::License check completed successfully"
+          echo "License check completed successfully"
+        env:
+          OCTOPUS_SERVER_API_KEY: ${{ steps.get-api-key.outputs.api-key }}
 
       - name: Build, Execute Unit Tests & E2E Tests
         run: ./gradlew build test -Pversion=${{ steps.git-version.outputs.nugetVersion }}
