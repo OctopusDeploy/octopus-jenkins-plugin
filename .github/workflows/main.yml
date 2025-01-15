@@ -56,10 +56,10 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" == "schedule" ]
           then
-            echo "::set-output name=nuGetVersion::${GITVERSION_MAJORMINORPATCH}-nightly-${{ github.run_number }}"
+            echo "nuGetVersion=${GITVERSION_MAJORMINORPATCH}-nightly-${{ github.run_number }}" >> $GITHUB_OUTPUT
             echo "Version: ${GITVERSION_MAJORMINORPATCH}-nightly-${{ github.run_number }}"
           else
-            echo "::set-output name=nuGetVersion::${GITVERSION_FULLSEMVER}"
+            echo "nuGetVersion=${GITVERSION_FULLSEMVER}" >> $GITHUB_OUTPUT
             echo "Version: ${GITVERSION_FULLSEMVER}"
           fi
 
@@ -70,7 +70,7 @@ jobs:
 
       - name: Set Octo CLI Path
         id: cli-path
-        run: echo "::set-output name=install-path::$(which octo)"
+        run: echo "install-path=$(which octo)" >> $GITHUB_OUTPUT
 
       - name: Setup JDK8
         uses: actions/setup-java@v3
@@ -145,9 +145,6 @@ jobs:
           API_KEY=$(echo "$API_KEY_RESPONSE" | grep -o '"ApiKey": *"[^"]*"' | sed 's/"ApiKey": *"\([^"]*\)"/\1/')
           echo "api-key=$API_KEY" >> $GITHUB_OUTPUT
 
-        env:
-          OCTOPUS_SERVER_API_KEY: ${{ steps.get-api-key.outputs.api-key }}
-
       - name: Build, Execute Unit Tests & E2E Tests
         run: ./gradlew build test -Pversion=${{ steps.git-version.outputs.nugetVersion }}
         env:
@@ -171,7 +168,7 @@ jobs:
           find . -wholename '**/octopusdeploy/${{ steps.git-version.outputs.nugetVersion }}/*' -print | zip -j ${{ github.workspace }}/Octopus.Jenkins.${{ steps.git-version.outputs.nugetVersion }}.zip -@  
           popd
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: Octopus.Jenkins.${{ steps.git-version.outputs.nugetVersion }}
           path: "Octopus.Jenkins.${{ steps.git-version.outputs.nugetVersion }}.zip"
@@ -188,7 +185,7 @@ jobs:
           echo "::debug::${{github.event_name}}"
           OUTPUT_FILE="release_notes.txt"
           jq --raw-output '.release.body' ${{ github.event_path }} | sed 's#\r#  #g' > $OUTPUT_FILE
-          echo "::set-output name=release-note-file::$OUTPUT_FILE"
+          echo "release-note-file=$OUTPUT_FILE" >> $GITHUB_OUTPUT
 
       - name: Create a release in Octopus Deploy 🐙
         uses: OctopusDeploy/create-release-action@v2
