@@ -145,30 +145,20 @@ jobs:
           API_KEY=$(echo "$API_KEY_RESPONSE" | grep -o '"ApiKey": *"[^"]*"' | sed 's/"ApiKey": *"\([^"]*\)"/\1/')
           echo "api-key=$API_KEY" >> $GITHUB_OUTPUT
 
-      - name: Check Octopus License
-        run: |
-          echo "Making API request to check license..."
-          
-          # Make API request and pretty print the JSON response
-          curl -s -H "X-Octopus-ApiKey: $OCTOPUS_SERVER_API_KEY" \
-               -H "Accept: application/json" \
-               "http://localhost:${OCTOPUS_SERVER_DEPLOY_PORT}/api/licenses/licenses-current-usage" | jq '.'
         env:
           OCTOPUS_SERVER_API_KEY: ${{ steps.get-api-key.outputs.api-key }}
 
       - name: Build, Execute Unit Tests & E2E Tests
         run: ./gradlew build test -Pversion=${{ steps.git-version.outputs.nugetVersion }}
         env:
-          OCTOPUS_LICENSE: ${{ secrets.OCTOPUS_SERVER_BASE64_LICENSE }}
           OCTOPUS_SDK_AT_USE_EXISTING_SERVER: true
           OCTOPUS_CLI_PATH: ${{ steps.cli-path.outputs.install-path }}
           OCTOPUS_SERVER_URL: http://localhost:8080
           OCTOPUS_SERVER_API_KEY: ${{ steps.get-api-key.outputs.api-key }}
 
       - name: Execute Integration Tests
-        run: ./gradlew integrationTest -Pversion=${{ steps.git-version.outputs.nugetVersion }} --info --stacktrace
+        run: ./gradlew integrationTest -Pversion=${{ steps.git-version.outputs.nugetVersion }}
         env:
-          OCTOPUS_LICENSE: ${{ secrets.OCTOPUS_SERVER_BASE64_LICENSE }}
           OCTOPUS_SDK_AT_USE_EXISTING_SERVER: true
           OCTOPUS_SERVER_URL: http://localhost:8080
           OCTOPUS_SERVER_API_KEY: ${{ steps.get-api-key.outputs.api-key }}

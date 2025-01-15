@@ -95,4 +95,5 @@ public class E2eTest {
         return rawConfig.replace("<outputPath>.</outputPath>",
                 "<outputPath>" + temporaryFolder.getRoot() + "</outputPath>");
     }
+
 }
