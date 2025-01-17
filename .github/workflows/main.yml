@@ -26,6 +26,16 @@ jobs:
       OCTOPUS_API_KEY: ${{ secrets.OCTOPUS_API_KEY }}
       OCTOPUS_HOST: ${{ secrets.OCTOPUS_URL }}
       OCTOPUS_SPACE: Integrations
+      # SQL Server settings
+      MS_SQL_IMAGE: mcr.microsoft.com/mssql/server
+      MS_SQL_CONTAINER_NETWORK_ALIAS: sql-server
+      SA_PASSWORD: Password01!
+      MS_SQL_PORT: 1433
+      # Octopus Server settings
+      OCTOPUS_SERVER_IMAGE: docker.packages.octopushq.com/octopusdeploy/octopusdeploy
+      OCTOPUS_SERVER_DEPLOY_PORT: 8080
+      OCTOPUS_SERVER_USERNAME: admin
+      OCTOPUS_DEPLOY_SERVER_PASSWORD: Password01!
 
     steps:
       - name: Checkout Code
@@ -46,10 +56,10 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" == "schedule" ]
           then
-            echo "::set-output name=nuGetVersion::${GITVERSION_MAJORMINORPATCH}-nightly-${{ github.run_number }}"
+            echo "nuGetVersion=${GITVERSION_MAJORMINORPATCH}-nightly-${{ github.run_number }}" >> $GITHUB_OUTPUT
             echo "Version: ${GITVERSION_MAJORMINORPATCH}-nightly-${{ github.run_number }}"
           else
-            echo "::set-output name=nuGetVersion::${GITVERSION_FULLSEMVER}"
+            echo "nuGetVersion=${GITVERSION_FULLSEMVER}" >> $GITHUB_OUTPUT
             echo "Version: ${GITVERSION_FULLSEMVER}"
           fi
 
@@ -60,7 +70,7 @@ jobs:
 
       - name: Set Octo CLI Path
         id: cli-path
-        run: echo "::set-output name=install-path::$(which octo)"
+        run: echo "install-path=$(which octo)" >> $GITHUB_OUTPUT
 
       - name: Setup JDK8
         uses: actions/setup-java@v3
@@ -68,18 +78,87 @@ jobs:
           java-version: "8"
           distribution: "adopt"
 
+      - name: Create Docker network
+        run: docker network create octopus-network
+
+      - name: Start SQL Server container
+        run: |
+          docker run -d \
+            --name mssql \
+            --network octopus-network \
+            --network-alias ${{ env.MS_SQL_CONTAINER_NETWORK_ALIAS }} \
+            -p ${{ env.MS_SQL_PORT }}:1433 \
+            -e "SA_PASSWORD=${{ env.SA_PASSWORD }}" \
+            -e "MSSQL_TCP_PORT=${{ env.MS_SQL_PORT }}" \
+            -e "ACCEPT_EULA=Y" \
+            -e "MSSQL_PID=Developer" \
+            ${{ env.MS_SQL_IMAGE }}
+
+      - name: Wait for SQL Server to be ready
+        run: |
+          timeout 300 bash -c 'until docker logs mssql 2>&1 | grep -q "SQL Server is now ready for client connections"; do
+            echo "Waiting for SQL Server to be ready..."
+            sleep 5
+          done' || false
+
+      - name: Start Octopus Deploy container
+        run: |
+          CONNECTION_STRING="Server=${{ env.MS_SQL_CONTAINER_NETWORK_ALIAS }},${{ env.MS_SQL_PORT }};Database=OctopusDeploy;User=sa;Password=${{ env.SA_PASSWORD }}"
+          
+          docker run -d \
+          --name octopus-server \
+          --network octopus-network \
+          --network-alias OCTOPUS_SERVER \
+          -p ${{ env.OCTOPUS_SERVER_DEPLOY_PORT }}:8080 \
+          -e "ACCEPT_EULA=Y" \
+          -e "ADMIN_USERNAME=${{ env.OCTOPUS_SERVER_USERNAME }}" \
+          -e "ADMIN_PASSWORD=${{ env.OCTOPUS_DEPLOY_SERVER_PASSWORD }}" \
+          -e "DB_CONNECTION_STRING=${CONNECTION_STRING}" \
+          -e "OCTOPUS_SERVER_BASE64_LICENSE=${{ secrets.OCTOPUS_SERVER_BASE64_LICENSE }}" \
+          "${{ env.OCTOPUS_SERVER_IMAGE }}"
+
+      - name: Wait for Octopus Deploy to be ready
+        run: |
+          timeout 300 bash -c 'until docker logs octopus-server 2>&1 | grep -q "Web server is ready to process requests"; do
+            echo "Waiting for Octopus Deploy to be ready..."
+            sleep 5
+          done' || false
+
+      - name: Get API Key
+        id: get-api-key
+        run: |
+          # Login and save cookies
+          curl -c cookies.txt -b cookies.txt -X POST http://localhost:8080/api/users/login \
+          -H "Content-Type: application/json" \
+          -d "{\"Username\":\"${{ env.OCTOPUS_SERVER_USERNAME }}\",\"Password\":\"${{ env.OCTOPUS_DEPLOY_SERVER_PASSWORD }}\"}"
+          
+          CSRF_TOKEN=$(grep 'Octopus-Csrf-Token' cookies.txt | awk '{print $7}')
+          echo "Creating API key..."
+          
+          API_KEY_RESPONSE=$(curl -b cookies.txt -X POST "http://localhost:8080/api/users/Users-1/apikeys" \
+          -H "Content-Type: application/json" \
+          -H "Accept: application/json" \
+          -H "X-Octopus-Csrf-Token: $CSRF_TOKEN" \
+          -d '{"Purpose":"GitHub Actions Testing","ExpiresIn":"1.00:00:00"}')
+          
+           # Extract API key
+          API_KEY=$(echo "$API_KEY_RESPONSE" | grep -o '"ApiKey": *"[^"]*"' | sed 's/"ApiKey": *"\([^"]*\)"/\1/')
+          echo "api-key=$API_KEY" >> $GITHUB_OUTPUT
+
       - name: Build, Execute Unit Tests & E2E Tests
         run: ./gradlew build test -Pversion=${{ steps.git-version.outputs.nugetVersion }}
         env:
-          OCTOPUS_LICENSE: ${{ secrets.OCTOPUS_LICENSE }}
-          OCTOPUS_SDK_AT_USE_EXISTING_SERVER: false
+          OCTOPUS_SDK_AT_USE_EXISTING_SERVER: true
           OCTOPUS_CLI_PATH: ${{ steps.cli-path.outputs.install-path }}
+          OCTOPUS_SERVER_URL: http://localhost:8080
+          OCTOPUS_SERVER_API_KEY: ${{ steps.get-api-key.outputs.api-key }}
 
       - name: Execute Integration Tests
         run: ./gradlew integrationTest -Pversion=${{ steps.git-version.outputs.nugetVersion }}
         env:
-          OCTOPUS_LICENSE: ${{ secrets.OCTOPUS_LICENSE }}
-          OCTOPUS_SDK_AT_USE_EXISTING_SERVER: false
+          OCTOPUS_SDK_AT_USE_EXISTING_SERVER: true
+          OCTOPUS_SERVER_URL: http://localhost:8080
+          OCTOPUS_SERVER_API_KEY: ${{ steps.get-api-key.outputs.api-key }}
 
       - name: Create Plugin Zip
         id: create-package
@@ -89,7 +168,7 @@ jobs:
           find . -wholename '**/octopusdeploy/${{ steps.git-version.outputs.nugetVersion }}/*' -print | zip -j ${{ github.workspace }}/Octopus.Jenkins.${{ steps.git-version.outputs.nugetVersion }}.zip -@  
           popd
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: Octopus.Jenkins.${{ steps.git-version.outputs.nugetVersion }}
           path: "Octopus.Jenkins.${{ steps.git-version.outputs.nugetVersion }}.zip"
@@ -106,7 +185,7 @@ jobs:
           echo "::debug::${{github.event_name}}"
           OUTPUT_FILE="release_notes.txt"
           jq --raw-output '.release.body' ${{ github.event_path }} | sed 's#\r#  #g' > $OUTPUT_FILE
-          echo "::set-output name=release-note-file::$OUTPUT_FILE"
+          echo "release-note-file=$OUTPUT_FILE" >> $GITHUB_OUTPUT
 
       - name: Create a release in Octopus Deploy 🐙
         uses: OctopusDeploy/create-release-action@v2

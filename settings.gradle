@@ -6,7 +6,7 @@ dependencyResolutionManagement {
   versionCatalogs {
     libs {
       // Plugins
-      alias('jenkins').toPluginId('org.jenkins-ci.jpi').version('0.43.0')
+      alias('jenkins').toPluginId('org.jenkins-ci.jpi').version('0.46.0')
       alias('license').toPluginId('com.github.hierynomus.license').version('0.16.1')
       alias('spotless').toPluginId('com.diffplug.spotless').version('5.15.0')
 
