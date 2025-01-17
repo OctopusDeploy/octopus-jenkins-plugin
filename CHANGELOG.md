@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.0.1](https://github.com/OctopusDeploy/octopus-jenkins-plugin/compare/v4.0.0...v4.0.1) (2025-01-17)
+
+
+### Bug Fixes
+
+* update github workflow and upgrade jenkins plugin ([#155](https://github.com/OctopusDeploy/octopus-jenkins-plugin/issues/155)) ([5830ddb](https://github.com/OctopusDeploy/octopus-jenkins-plugin/commit/5830ddbdfbdc4fa5964f00185d405d48a0decafd))
+
 ## [4.0.0](https://github.com/OctopusDeploy/octopus-jenkins-plugin/compare/v3.1.9...v4.0.0) (2023-06-06)
 
 
