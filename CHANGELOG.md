@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.0.2](https://github.com/OctopusDeploy/octopus-jenkins-plugin/compare/v4.0.1...v4.0.2) (2025-04-04)
+
+
+### Bug Fixes
+
+* remove octopus bundle from runtime dependencies ([#158](https://github.com/OctopusDeploy/octopus-jenkins-plugin/issues/158)) ([0dfc7c3](https://github.com/OctopusDeploy/octopus-jenkins-plugin/commit/0dfc7c3cdd0451cef024a1d79f1bbff50f2869f0))
+
 ## [4.0.1](https://github.com/OctopusDeploy/octopus-jenkins-plugin/compare/v4.0.0...v4.0.1) (2025-01-17)
 
 
