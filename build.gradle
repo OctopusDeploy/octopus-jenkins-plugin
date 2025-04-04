@@ -28,7 +28,6 @@ configurations {
 }
 
 dependencies {
-  implementation libs.bundles.octopus
   implementation libs.apache.commons.collections4
   implementation libs.google.gson
   implementation libs.jenkins.workflow
