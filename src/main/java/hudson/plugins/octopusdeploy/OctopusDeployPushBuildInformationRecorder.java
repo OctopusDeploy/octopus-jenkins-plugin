@@ -3,7 +3,8 @@ package hudson.plugins.octopusdeploy;
 import com.google.common.base.Splitter;
 import hudson.*;
 import hudson.model.*;
-import hudson.plugins.octopusdeploy.cli.LegacyCliWrapper;
+import hudson.plugins.octopusdeploy.cli.OctopusCliExecutor;
+import hudson.plugins.octopusdeploy.cli.OctopusCliWrapperBuilder;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
 import hudson.plugins.octopusdeploy.exception.ServerConfigurationNotFoundException;
 import hudson.plugins.octopusdeploy.services.OctopusBuildInformationBuilder;
@@ -128,7 +129,7 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
             final String buildInformationFile = getBuildInformationFromScm(run, envInjector, workspace);
 
             // Create wrapper
-            LegacyCliWrapper wrapper = new LegacyCliWrapper.Builder(
+            OctopusCliExecutor wrapper = new OctopusCliWrapperBuilder(
                     getToolId(), workspace, launcher, envVars, listenerAdapter)
                     .serverId(serverId)
                     .spaceId(spaceId)

@@ -8,7 +8,8 @@ import com.octopusdeploy.api.data.*;
 import hudson.*;
 import hudson.FilePath.FileCallable;
 import hudson.model.*;
-import hudson.plugins.octopusdeploy.cli.LegacyCliWrapper;
+import hudson.plugins.octopusdeploy.cli.OctopusCliExecutor;
+import hudson.plugins.octopusdeploy.cli.OctopusCliWrapperBuilder;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
 import hudson.remoting.VirtualChannel;
 import hudson.scm.ChangeLogSet;
@@ -354,7 +355,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
 
         try {
             // Create wrapper
-            LegacyCliWrapper wrapper = new LegacyCliWrapper.Builder(
+            OctopusCliExecutor wrapper = new OctopusCliWrapperBuilder(
                     getToolId(), workspace, launcher, envVars, listenerAdapter)
                     .serverId(serverId)
                     .spaceId(spaceId)

@@ -10,7 +10,8 @@ import com.octopusdeploy.api.data.Environment;
 import com.octopusdeploy.api.data.Project;
 import hudson.*;
 import hudson.model.*;
-import hudson.plugins.octopusdeploy.cli.LegacyCliWrapper;
+import hudson.plugins.octopusdeploy.cli.OctopusCliExecutor;
+import hudson.plugins.octopusdeploy.cli.OctopusCliWrapperBuilder;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
 import hudson.util.*;
 import java.util.logging.Level;
@@ -117,7 +118,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
             }
 
             // Create wrapper
-            LegacyCliWrapper wrapper = new LegacyCliWrapper.Builder(
+            OctopusCliExecutor wrapper = new OctopusCliWrapperBuilder(
                     getToolId(), workspace, launcher, envVars, listenerAdapter)
                     .serverId(this.serverId)
                     .spaceId(spaceId)

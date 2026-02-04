@@ -3,7 +3,8 @@ package hudson.plugins.octopusdeploy;
 import com.google.common.base.Splitter;
 import hudson.*;
 import hudson.model.*;
-import hudson.plugins.octopusdeploy.cli.LegacyCliWrapper;
+import hudson.plugins.octopusdeploy.cli.OctopusCliExecutor;
+import hudson.plugins.octopusdeploy.cli.OctopusCliWrapperBuilder;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
 import hudson.util.FormValidation;
 import hudson.util.VariableResolver;
@@ -115,7 +116,7 @@ public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorderBuil
 
         try {
             // Create wrapper
-            LegacyCliWrapper wrapper = new LegacyCliWrapper.Builder(
+            OctopusCliExecutor wrapper = new OctopusCliWrapperBuilder(
                     getToolId(), workspace, launcher, envVars, listenerAdapter)
                     .verboseLogging(verboseLogging)
                     .build();

@@ -10,8 +10,6 @@ import hudson.model.Result;
 import hudson.model.TaskListener;
 import hudson.plugins.octopusdeploy.Log;
 import hudson.plugins.octopusdeploy.OctoInstallation;
-import hudson.plugins.octopusdeploy.OctopusDeployPlugin;
-import hudson.plugins.octopusdeploy.OctopusDeployServer;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
 import hudson.plugins.octopusdeploy.utils.JenkinsHelpers;
 import jenkins.model.Jenkins;
@@ -26,10 +24,10 @@ import java.util.*;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
- * Wrapper class for executing legacy .NET-based Octopus CLI commands.
- * Handles command construction, argument masking, and process execution.
+ * Wrapper class for executing Golang-based Octopus CLI commands.
+ * Supports the new CLI from https://github.com/OctopusDeploy/cli
  */
-public class LegacyCliWrapper implements OctopusCliExecutor {
+public class CliWrapper implements OctopusCliExecutor {
 
     // Jenkins dependencies
     private final String toolId;
@@ -49,10 +47,10 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
     /**
      * Package-private constructor - use OctopusCliWrapperBuilder to create instances
      */
-    LegacyCliWrapper(String toolId, FilePath workspace, Launcher launcher,
-                     EnvVars environment, TaskListener listener,
-                     String serverUrl, String apiKey, String spaceId,
-                     String projectName, boolean verboseLogging, boolean ignoreSslErrors) {
+    CliWrapper(String toolId, FilePath workspace, Launcher launcher,
+               EnvVars environment, TaskListener listener,
+               String serverUrl, String apiKey, String spaceId,
+               String projectName, boolean verboseLogging, boolean ignoreSslErrors) {
         this.toolId = toolId;
         this.workspace = workspace;
         this.launcher = launcher;
@@ -66,19 +64,21 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
         this.ignoreSslErrors = ignoreSslErrors;
     }
 
-    /**
-     * Execute pack command
-     */
+    @Override
     public Result pack(String packageId, String packageVersion, String format,
-            String sourcePath, List<String> includePaths, String outputPath,
-            boolean overwriteExisting, String additionalArgs)
+                      String sourcePath, List<String> includePaths, String outputPath,
+                      boolean overwriteExisting, String additionalArgs)
             throws IOException, InterruptedException {
 
         List<String> args = new ArrayList<>();
         Set<Integer> maskedIndices = new HashSet<>();
 
         checkState(StringUtils.isNotBlank(packageId),
-                String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Package ID"));
+                  String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Package ID"));
+
+        // New CLI uses: octopus package pack
+        args.add("package");
+        args.add("pack");
 
         args.add("--id");
         args.add(packageId);
@@ -94,7 +94,7 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
         }
 
         if (StringUtils.isNotBlank(sourcePath)) {
-            args.add("--basePath");
+            args.add("--base-path");
             args.add(sourcePath);
         }
 
@@ -106,7 +106,7 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
         }
 
         if (StringUtils.isNotBlank(outputPath)) {
-            args.add("--outFolder");
+            args.add("--out-folder");
             args.add(outputPath);
         }
 
@@ -115,7 +115,7 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
         }
 
         if (verboseLogging) {
-            args.add("--verbose");
+            args.add("--debug");
         }
 
         if (StringUtils.isNotBlank(additionalArgs)) {
@@ -123,20 +123,22 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
             args.addAll(Arrays.asList(myArgs));
         }
 
-        return execute("pack", args, maskedIndices);
+        return execute(args, maskedIndices);
     }
 
-    /**
-     * Execute push command
-     */
+    @Override
     public Result push(List<String> packagePaths, String overwriteMode, String additionalArgs)
             throws IOException, InterruptedException {
 
         List<String> args = new ArrayList<>();
         Set<Integer> maskedIndices = new HashSet<>();
 
+        // New CLI uses: octopus package upload
+        args.add("package");
+        args.add("upload");
+
         // Add common arguments
-        addCommonArguments(args, maskedIndices, false); // push doesn't need project
+        addCommonArguments(args, maskedIndices, false);
 
         if (packagePaths != null && !packagePaths.isEmpty()) {
             for (String packagePath : packagePaths) {
@@ -155,22 +157,24 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
             args.addAll(Arrays.asList(myArgs));
         }
 
-        return execute("push", args, maskedIndices);
+        return execute(args, maskedIndices);
     }
 
-    /**
-     * Execute build-information push command
-     */
+    @Override
     public Result pushBuildInformation(List<String> packageIds, String version,
-            String filePath, String overwriteMode,
-            String additionalArgs)
+                                      String filePath, String overwriteMode,
+                                      String additionalArgs)
             throws IOException, InterruptedException {
 
         List<String> args = new ArrayList<>();
         Set<Integer> maskedIndices = new HashSet<>();
 
+        // New CLI uses: octopus build-information push
+        args.add("build-information");
+        args.add("push");
+
         // Add common arguments
-        addCommonArguments(args, maskedIndices, false); // build-information doesn't need project
+        addCommonArguments(args, maskedIndices, false);
 
         if (packageIds != null && !packageIds.isEmpty()) {
             for (String packageId : packageIds) {
@@ -199,20 +203,22 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
             args.addAll(Arrays.asList(myArgs));
         }
 
-        return execute("build-information", args, maskedIndices);
+        return execute(args, maskedIndices);
     }
 
-    /**
-     * Execute deploy-release command
-     */
+    @Override
     public Result deployRelease(String version, String environment, String tenant,
-            String tenantTag, List<String> variables,
-            boolean waitForDeployment, String deploymentTimeout,
-            boolean cancelOnTimeout, String additionalArgs)
+                               String tenantTag, List<String> variables,
+                               boolean waitForDeployment, String deploymentTimeout,
+                               boolean cancelOnTimeout, String additionalArgs)
             throws IOException, InterruptedException {
 
         List<String> args = new ArrayList<>();
         Set<Integer> maskedIndices = new HashSet<>();
+
+        // New CLI uses: octopus release deploy
+        args.add("release");
+        args.add("deploy");
 
         // Add common arguments (includes project)
         addCommonArguments(args, maskedIndices, true);
@@ -223,7 +229,7 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
         }
 
         if (StringUtils.isNotBlank(environment)) {
-            args.add("--deployTo");
+            args.add("--environment");
             args.add(environment);
         }
 
@@ -233,7 +239,7 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
         }
 
         if (StringUtils.isNotBlank(tenantTag)) {
-            args.add("--tenantTag");
+            args.add("--tenant-tag");
             args.add(tenantTag);
         }
 
@@ -245,15 +251,15 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
         }
 
         if (waitForDeployment) {
-            args.add("--waitForDeployment");
+            args.add("--progress");
 
             if (StringUtils.isNotBlank(deploymentTimeout)) {
-                args.add("--deploymentTimeout");
+                args.add("--deployment-timeout");
                 args.add(deploymentTimeout);
             }
 
             if (cancelOnTimeout) {
-                args.add("--cancelOnTimeout");
+                args.add("--cancel-on-timeout");
             }
         }
 
@@ -262,23 +268,25 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
             args.addAll(Arrays.asList(myArgs));
         }
 
-        return execute("deploy-release", args, maskedIndices);
+        return execute(args, maskedIndices);
     }
 
-    /**
-     * Execute create-release command
-     */
+    @Override
     public Result createRelease(String version, String channel, String releaseNotes,
-            String defaultPackageVersion, List<String> packages,
-            String gitRef, String gitCommit,
-            String deployToEnvironment, String tenant, String tenantTag,
-            List<String> variables, boolean waitForDeployment,
-            String deploymentTimeout, boolean cancelOnTimeout,
-            String additionalArgs)
+                               String defaultPackageVersion, List<String> packages,
+                               String gitRef, String gitCommit,
+                               String deployToEnvironment, String tenant, String tenantTag,
+                               List<String> variables, boolean waitForDeployment,
+                               String deploymentTimeout, boolean cancelOnTimeout,
+                               String additionalArgs)
             throws IOException, InterruptedException {
 
         List<String> args = new ArrayList<>();
         Set<Integer> maskedIndices = new HashSet<>();
+
+        // New CLI uses: octopus release create
+        args.add("release");
+        args.add("create");
 
         // Add common arguments (includes project)
         addCommonArguments(args, maskedIndices, true);
@@ -294,12 +302,12 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
         }
 
         if (StringUtils.isNotBlank(releaseNotes)) {
-            args.add("--releaseNotes");
+            args.add("--release-notes");
             args.add(releaseNotes);
         }
 
         if (StringUtils.isNotBlank(defaultPackageVersion)) {
-            args.add("--packageVersion");
+            args.add("--package-version");
             args.add(defaultPackageVersion);
         }
 
@@ -311,17 +319,17 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
         }
 
         if (StringUtils.isNotBlank(gitRef)) {
-            args.add("--gitRef");
+            args.add("--git-ref");
             args.add(gitRef);
         }
 
         if (StringUtils.isNotBlank(gitCommit)) {
-            args.add("--gitCommit");
+            args.add("--git-commit");
             args.add(gitCommit);
         }
 
         if (StringUtils.isNotBlank(deployToEnvironment)) {
-            args.add("--deployTo");
+            args.add("--deploy-to");
             args.add(deployToEnvironment);
         }
 
@@ -331,7 +339,7 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
         }
 
         if (StringUtils.isNotBlank(tenantTag)) {
-            args.add("--tenantTag");
+            args.add("--tenant-tag");
             args.add(tenantTag);
         }
 
@@ -343,15 +351,15 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
         }
 
         if (waitForDeployment) {
-            args.add("--waitForDeployment");
+            args.add("--progress");
 
             if (StringUtils.isNotBlank(deploymentTimeout)) {
-                args.add("--deploymentTimeout");
+                args.add("--deployment-timeout");
                 args.add(deploymentTimeout);
             }
 
             if (cancelOnTimeout) {
-                args.add("--cancelOnTimeout");
+                args.add("--cancel-on-timeout");
             }
         }
 
@@ -360,7 +368,7 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
             args.addAll(Arrays.asList(myArgs));
         }
 
-        return execute("create-release", args, maskedIndices);
+        return execute(args, maskedIndices);
     }
 
     /**
@@ -369,32 +377,32 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
     private void addCommonArguments(List<String> args, Set<Integer> maskedIndices, boolean includeProject) {
         // Project
         if (includeProject && StringUtils.isNotBlank(projectName)) {
-            args.add(OctoConstants.Commands.Arguments.PROJECT_NAME);
+            args.add("--project");
             args.add(projectName);
         }
 
         // Server
         if (StringUtils.isNotBlank(serverUrl)) {
-            args.add(OctoConstants.Commands.Arguments.SERVER_URL);
+            args.add("--server");
             args.add(serverUrl);
         }
 
         // API Key (masked)
         if (StringUtils.isNotBlank(apiKey)) {
-            args.add(OctoConstants.Commands.Arguments.API_KEY);
+            args.add("--api-key");
             maskedIndices.add(args.size()); // Mask the next value
             args.add(apiKey);
         }
 
         // Space
         if (StringUtils.isNotBlank(spaceId)) {
-            args.add(OctoConstants.Commands.Arguments.SPACE_NAME);
+            args.add("--space");
             args.add(spaceId);
         }
 
         // SSL
         if (ignoreSslErrors) {
-            args.add("--ignoreSslErrors");
+            args.add("--ignore-ssl-errors");
         }
 
         // Debug
@@ -406,7 +414,7 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
     /**
      * Core execution method
      */
-    private Result execute(String command, List<String> args, Set<Integer> maskedIndices)
+    private Result execute(List<String> args, Set<Integer> maskedIndices)
             throws IOException, InterruptedException {
 
         BuildListener buildListener = listener instanceof BuildListener
@@ -416,7 +424,7 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
 
         // Get CLI path
         checkState(StringUtils.isNotBlank(toolId),
-                String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Octopus CLI"));
+                  String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Octopus CLI"));
 
         Node builtOn = workspace.toComputer().getNode();
         String cliPath = getOctopusToolPath(toolId, builtOn, environment, listener);
@@ -426,10 +434,10 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
             return Result.FAILURE;
         }
 
-        // Build full command: [cliPath, command, ...args]
+        // Build full command: [cliPath, ...args]
+        // Note: New CLI doesn't need a command parameter before the subcommands
         List<String> cmdArgs = new ArrayList<>();
         cmdArgs.add(cliPath);
-        cmdArgs.add(command);
         cmdArgs.addAll(args);
 
         // Build mask array
@@ -452,7 +460,7 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
             return Result.SUCCESS;
         }
 
-        log.error("Unable to create or deploy release. Please check the build log for details on the error.");
+        log.error("Octopus CLI command failed. Please check the build log for details on the error.");
         return Result.FAILURE;
     }
 

@@ -5,7 +5,8 @@ import com.google.inject.Guice;
 import com.google.inject.Inject;
 import hudson.*;
 import hudson.model.*;
-import hudson.plugins.octopusdeploy.cli.LegacyCliWrapper;
+import hudson.plugins.octopusdeploy.cli.OctopusCliExecutor;
+import hudson.plugins.octopusdeploy.cli.OctopusCliWrapperBuilder;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
 import hudson.plugins.octopusdeploy.exception.ServerConfigurationNotFoundException;
 import hudson.plugins.octopusdeploy.services.FileService;
@@ -145,7 +146,7 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
             }
 
             // Create wrapper
-            LegacyCliWrapper wrapper = new LegacyCliWrapper.Builder(
+            OctopusCliExecutor wrapper = new OctopusCliWrapperBuilder(
                     getToolId(), workspace, launcher, envVars, listenerAdapter)
                     .serverId(serverId)
                     .spaceId(spaceId)
