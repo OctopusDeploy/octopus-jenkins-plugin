@@ -3,12 +3,12 @@ package hudson.plugins.octopusdeploy;
 import com.google.common.base.Splitter;
 import hudson.*;
 import hudson.model.*;
+import hudson.plugins.octopusdeploy.cli.LegacyCliWrapper;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
 import hudson.util.FormValidation;
 import hudson.util.VariableResolver;
 import jenkins.util.BuildListenerAdapter;
 import org.apache.commons.lang.StringUtils;
-import org.apache.tools.ant.types.Commandline;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -16,11 +16,8 @@ import org.kohsuke.stapler.QueryParameter;
 
 import javax.annotation.Nonnull;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkState;
 import static hudson.plugins.octopusdeploy.services.StringUtil.sanitizeValue;
 
 public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorderBuildStep implements Serializable {
@@ -78,7 +75,6 @@ public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorderBuil
 
     @Override
     public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws AbortException {
-        boolean success = true;
         BuildListenerAdapter listenerAdapter = new BuildListenerAdapter(listener);
 
         Log log = new Log(listenerAdapter);
@@ -96,93 +92,53 @@ public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorderBuil
             run.setResult(Result.FAILURE);
             return;
         }
-        VariableResolver resolver =  new VariableResolver.ByMap<>(envVars);
+        VariableResolver resolver = new VariableResolver.ByMap<>(envVars);
         EnvironmentVariableValueInjector envInjector = new EnvironmentVariableValueInjector(resolver, envVars);
 
-        //logStartHeader
-
-
-
-        try {
-            final List<String> commands = buildCommands(envInjector);
-            final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
-
-            Result result = launchOcto(workspace, launcher, commands, masks, envVars, listenerAdapter);
-            success = result.equals(Result.SUCCESS);
-        } catch (Exception ex) {
-            log.fatal("Failed to package application: " + getExceptionMessage(ex));
-            success = false;
-        }
-
-        if (!success) {
-            throw new AbortException("Failed to pack");
-        }
-    }
-
-    private List<String> buildCommands(final EnvironmentVariableValueInjector envInjector) {
-        final List<String> commands = new ArrayList<>();
+        // Inject environment variables
         String packageId = envInjector.injectEnvironmentVariableValues(this.packageId);
         String packageVersion = envInjector.injectEnvironmentVariableValues(this.packageVersion);
         String packageFormat = envInjector.injectEnvironmentVariableValues(this.packageFormat);
         String sourcePath = envInjector.injectEnvironmentVariableValues(this.sourcePath);
-        String includePaths = envInjector.injectEnvironmentVariableValues(this.includePaths);
+        String includePathsValue = envInjector.injectEnvironmentVariableValues(this.includePaths);
         String outputPath = envInjector.injectEnvironmentVariableValues(this.outputPath);
-        Boolean overwriteExisting = this.overwriteExisting;
-        Boolean verboseLogging = this.verboseLogging;
         String additionalArgs = envInjector.injectEnvironmentVariableValues(this.additionalArgs);
 
-        checkState(StringUtils.isNotBlank(packageId), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Package ID"));
-
-        commands.add("pack");
-
-        commands.add("--id");
-        commands.add(packageId);
-
-        if (StringUtils.isNotBlank(packageVersion)) {
-            commands.add("--version");
-            commands.add(packageVersion);
-        }
-
-        if (StringUtils.isNotBlank(packageFormat)) {
-            commands.add("--format");
-            commands.add(packageFormat);
-        }
-
-        if (StringUtils.isNotBlank(sourcePath)) {
-            commands.add("--basePath");
-            commands.add(sourcePath);
-        }
-
-        if (StringUtils.isNotBlank(includePaths)) {
-            final Iterable<String> includePathsSplit = Splitter.on("\n")
+        // Parse multi-line include paths
+        List<String> includePathsList = null;
+        if (StringUtils.isNotBlank(includePathsValue)) {
+            includePathsList = Splitter.on("\n")
                     .trimResults()
                     .omitEmptyStrings()
-                    .split(includePaths);
-            for (final String include : includePathsSplit) {
-                commands.add("--include");
-                commands.add(include);
+                    .splitToList(includePathsValue);
+        }
+
+        try {
+            // Create wrapper
+            LegacyCliWrapper wrapper = new LegacyCliWrapper.Builder(
+                    getToolId(), workspace, launcher, envVars, listenerAdapter)
+                    .verboseLogging(verboseLogging)
+                    .build();
+
+            // Execute pack command
+            Result result = wrapper.pack(
+                    packageId,
+                    packageVersion,
+                    packageFormat,
+                    sourcePath,
+                    includePathsList,
+                    outputPath,
+                    overwriteExisting != null && overwriteExisting,
+                    additionalArgs
+            );
+
+            if (!result.equals(Result.SUCCESS)) {
+                throw new AbortException("Failed to pack");
             }
+        } catch (Exception ex) {
+            log.fatal("Failed to package application: " + getExceptionMessage(ex));
+            throw new AbortException("Failed to pack");
         }
-
-        if (StringUtils.isNotBlank(outputPath)) {
-            commands.add("--outFolder");
-            commands.add(outputPath);
-        }
-
-        if (overwriteExisting) {
-            commands.add("--overwrite");
-        }
-
-        if (verboseLogging) {
-            commands.add("--verbose");
-        }
-
-        if(StringUtils.isNotBlank(additionalArgs)) {
-            final String[] myArgs = Commandline.translateCommandline(additionalArgs);
-            commands.addAll(Arrays.asList(myArgs));
-        }
-
-        return commands;
     }
 
     @Extension

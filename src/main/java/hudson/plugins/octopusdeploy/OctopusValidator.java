@@ -169,7 +169,7 @@ public class OctopusValidator {
         if(serverId.equals("default")) {
             return FormValidation.ok();
         }
-        List<String> ids = AbstractOctopusDeployRecorderPostBuildStep.getOctopusDeployServersIds();
+        List<String> ids = OctopusDeployPlugin.getOctopusDeployServersIds();
         if (ids.isEmpty()){
             return FormValidation.error("There are no Octopus Deploy servers configured.");
         }

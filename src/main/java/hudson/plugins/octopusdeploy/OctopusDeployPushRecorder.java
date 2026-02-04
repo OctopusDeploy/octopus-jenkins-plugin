@@ -5,6 +5,7 @@ import com.google.inject.Guice;
 import com.google.inject.Inject;
 import hudson.*;
 import hudson.model.*;
+import hudson.plugins.octopusdeploy.cli.LegacyCliWrapper;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
 import hudson.plugins.octopusdeploy.exception.ServerConfigurationNotFoundException;
 import hudson.plugins.octopusdeploy.services.FileService;
@@ -14,7 +15,6 @@ import jenkins.util.BuildListenerAdapter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.Predicate;
 import org.apache.commons.lang.StringUtils;
-import org.apache.tools.ant.types.Commandline;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -23,7 +23,6 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -135,9 +134,28 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
         }
 
         try {
-            final List<String> commands = buildCommands(envInjector, files, ws);
-            final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
-            Result result = launchOcto(workspace, launcher, commands, masks, envVars, listenerAdapter);
+            String additionalArgs = envInjector.injectEnvironmentVariableValues(this.additionalArgs);
+
+            checkState(!files.isEmpty(), String.format("The pattern \n%s\n failed to match any files", packagePaths));
+
+            // Convert FilePath list to String list
+            List<String> packagePathsList = new ArrayList<>();
+            for (final FilePath file : files) {
+                packagePathsList.add(file.absolutize().getRemote());
+            }
+
+            // Create wrapper
+            LegacyCliWrapper wrapper = new LegacyCliWrapper.Builder(
+                    getToolId(), workspace, launcher, envVars, listenerAdapter)
+                    .serverId(serverId)
+                    .spaceId(spaceId)
+                    .verboseLogging(verboseLogging)
+                    .build();
+
+            // Execute push command
+            String overwriteModeValue = (overwriteMode != OverwriteMode.FailIfExists) ? overwriteMode.name() : null;
+            Result result = wrapper.push(packagePathsList, overwriteModeValue, additionalArgs);
+
             success = result.equals(Result.SUCCESS);
         } catch (Exception ex) {
             log.fatal("Failed to push the packages: " + getExceptionMessage(ex));
@@ -147,60 +165,6 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
         if (!success) {
             throw new AbortException("Failed to push");
         }
-    }
-
-    private List<String> buildCommands(final EnvironmentVariableValueInjector envInjector, final List<FilePath> files, FilePath workspace) throws IOException, InterruptedException, ServerConfigurationNotFoundException {
-        final List<String> commands = new ArrayList<>();
-
-        OctopusDeployServer server = getOctopusDeployServer(this.serverId);
-        String serverUrl = server.getUrl();
-        String apiKey = server.getApiKey().getPlainText();
-        boolean ignoreSslErrors = server.getIgnoreSslErrors();
-        OverwriteMode overwriteMode = this.overwriteMode;
-        Boolean verboseLogging = this.verboseLogging;
-        String additionalArgs = envInjector.injectEnvironmentVariableValues(this.additionalArgs);
-
-        checkState(StringUtils.isNotBlank(serverUrl), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Octopus URL"));
-        checkState(StringUtils.isNotBlank(apiKey), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "API Key"));
-        checkState(!files.isEmpty(), String.format("The pattern \n%s\n failed to match any files", packagePaths));
-
-        commands.add("push");
-
-        commands.add("--server");
-        commands.add(serverUrl);
-
-        commands.add("--apiKey");
-        commands.add(apiKey);
-
-        if (StringUtils.isNotBlank(spaceId)) {
-            commands.add("--space");
-            commands.add(spaceId);
-        }
-
-        for (final FilePath file : files) {
-            commands.add("--package");
-            commands.add(file.absolutize().getRemote());
-        }
-
-        if (overwriteMode != OverwriteMode.FailIfExists) {
-            commands.add("--overwrite-mode");
-            commands.add(overwriteMode.name());
-        }
-
-        if (ignoreSslErrors) {
-            commands.add("--ignoreSslErrors");
-        }
-
-        if (verboseLogging) {
-            commands.add("--debug");
-        }
-
-        if(StringUtils.isNotBlank(additionalArgs)) {
-            final String[] myArgs = Commandline.translateCommandline(additionalArgs);
-            commands.addAll(Arrays.asList(myArgs));
-        }
-
-        return commands;
     }
 
 

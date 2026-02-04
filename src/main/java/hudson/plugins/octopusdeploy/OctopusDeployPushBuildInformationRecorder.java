@@ -3,6 +3,7 @@ package hudson.plugins.octopusdeploy;
 import com.google.common.base.Splitter;
 import hudson.*;
 import hudson.model.*;
+import hudson.plugins.octopusdeploy.cli.LegacyCliWrapper;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
 import hudson.plugins.octopusdeploy.exception.ServerConfigurationNotFoundException;
 import hudson.plugins.octopusdeploy.services.OctopusBuildInformationBuilder;
@@ -13,7 +14,6 @@ import hudson.util.ListBoxModel;
 import hudson.util.VariableResolver;
 import jenkins.util.BuildListenerAdapter;
 import org.apache.commons.lang.StringUtils;
-import org.apache.tools.ant.types.Commandline;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -112,9 +112,39 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
 
 
         try {
-            final List<String> commands = buildCommands(run, envInjector, workspace);
-            final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
-            Result result = launchOcto(workspace, launcher, commands, masks, envVars, listenerAdapter);
+            String packageIds = envInjector.injectEnvironmentVariableValues(this.packageId);
+            String additionalArgs = envInjector.injectEnvironmentVariableValues(this.additionalArgs);
+
+            // Parse package IDs
+            List<String> packageIdsList = null;
+            if (StringUtils.isNotBlank(packageIds)) {
+                packageIdsList = Splitter.on("\n")
+                        .trimResults()
+                        .omitEmptyStrings()
+                        .splitToList(packageIds);
+            }
+
+            // Get build information file
+            final String buildInformationFile = getBuildInformationFromScm(run, envInjector, workspace);
+
+            // Create wrapper
+            LegacyCliWrapper wrapper = new LegacyCliWrapper.Builder(
+                    getToolId(), workspace, launcher, envVars, listenerAdapter)
+                    .serverId(serverId)
+                    .spaceId(spaceId)
+                    .verboseLogging(verboseLogging)
+                    .build();
+
+            // Execute push build information command
+            String overwriteModeValue = (overwriteMode != OverwriteMode.FailIfExists) ? overwriteMode.name() : null;
+            Result result = wrapper.pushBuildInformation(
+                    packageIdsList,
+                    packageVersion,
+                    buildInformationFile,
+                    overwriteModeValue,
+                    additionalArgs
+            );
+
             success = result.equals(Result.SUCCESS);
         } catch (Exception ex) {
             log.fatal("Failed to push the build information: " + getExceptionMessage(ex));
@@ -124,72 +154,6 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
         if (!success) {
             throw new AbortException("Failed to push build information");
         }
-    }
-
-    private List<String> buildCommands(final Run<?, ?> build, final EnvironmentVariableValueInjector envInjector, FilePath workspace) throws IOException, InterruptedException, ServerConfigurationNotFoundException {
-        final List<String> commands = new ArrayList<>();
-
-        OctopusDeployServer server = getOctopusDeployServer(this.serverId);
-        String serverUrl = server.getUrl();
-        String apiKey = server.getApiKey().getPlainText();
-        boolean ignoreSslErrors = server.getIgnoreSslErrors();
-        OverwriteMode overwriteMode = this.overwriteMode;
-        String packageIds = envInjector.injectEnvironmentVariableValues(this.packageId);
-        String additionalArgs = envInjector.injectEnvironmentVariableValues(this.additionalArgs);
-
-        checkState(StringUtils.isNotBlank(serverUrl), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Octopus URL"));
-        checkState(StringUtils.isNotBlank(apiKey), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "API Key"));
-
-        commands.add("build-information");
-
-        commands.add("--server");
-        commands.add(serverUrl);
-
-        commands.add("--apiKey");
-        commands.add(apiKey);
-
-        if (StringUtils.isNotBlank(spaceId)) {
-            commands.add("--space");
-            commands.add(spaceId);
-        }
-
-        if (StringUtils.isNotBlank(packageIds)) {
-            final Iterable<String> packageIdsSplit = Splitter.on("\n")
-                    .trimResults()
-                    .omitEmptyStrings()
-                    .split(packageIds);
-            for(final String packageId : packageIdsSplit) {
-                commands.add("--package-id");
-                commands.add(packageId);
-            }
-        }
-
-        commands.add("--version");
-        commands.add(packageVersion);
-
-        final String buildInformationFile = getBuildInformationFromScm(build, envInjector, workspace);
-        commands.add("--file");
-        commands.add(buildInformationFile);
-
-        if (overwriteMode != OverwriteMode.FailIfExists) {
-            commands.add("--overwrite-mode");
-            commands.add(overwriteMode.name());
-        }
-
-        if (verboseLogging) {
-            commands.add("--debug");
-        }
-
-        if (ignoreSslErrors) {
-            commands.add("--ignoreSslErrors");
-        }
-
-        if(StringUtils.isNotBlank(additionalArgs)) {
-            final String[] myArgs = Commandline.translateCommandline(additionalArgs);
-            commands.addAll(Arrays.asList(myArgs));
-        }
-
-        return commands;
     }
     /**
      * Attempt to load release notes info from SCM.
