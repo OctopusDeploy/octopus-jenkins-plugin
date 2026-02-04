@@ -38,6 +38,7 @@ dependencies {
   testImplementation libs.mockito.jupiter
   testImplementation libs.mockito.inline
   testImplementation libs.bundles.octopus
+  testImplementation libs.apache.commons.text
 
   integrationTestImplementation libs.bundles.octopus
   integrationTestImplementation libs.bundles.junit
