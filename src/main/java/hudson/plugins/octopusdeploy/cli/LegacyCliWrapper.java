@@ -77,6 +77,9 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
         List<String> args = new ArrayList<>();
         Set<Integer> maskedIndices = new HashSet<>();
 
+        // Add common arguments
+        addCommonArguments(args, maskedIndices, false);
+
         checkState(StringUtils.isNotBlank(packageId),
                 String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Package ID"));
 
@@ -112,10 +115,6 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
 
         if (overwriteExisting) {
             args.add("--overwrite");
-        }
-
-        if (verboseLogging) {
-            args.add("--verbose");
         }
 
         if (StringUtils.isNotBlank(additionalArgs)) {

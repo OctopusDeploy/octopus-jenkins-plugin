@@ -78,7 +78,11 @@ public class CliWrapper implements OctopusCliExecutor {
 
         // New CLI uses: octopus package pack
         args.add("package");
-        args.add("pack");
+        args.add(format);
+        args.add("create");
+
+        // Add common arguments
+        addCommonArguments(args, maskedIndices, false);
 
         args.add("--id");
         args.add(packageId);
@@ -86,11 +90,6 @@ public class CliWrapper implements OctopusCliExecutor {
         if (StringUtils.isNotBlank(packageVersion)) {
             args.add("--version");
             args.add(packageVersion);
-        }
-
-        if (StringUtils.isNotBlank(format)) {
-            args.add("--format");
-            args.add(format);
         }
 
         if (StringUtils.isNotBlank(sourcePath)) {
@@ -112,10 +111,6 @@ public class CliWrapper implements OctopusCliExecutor {
 
         if (overwriteExisting) {
             args.add("--overwrite");
-        }
-
-        if (verboseLogging) {
-            args.add("--debug");
         }
 
         if (StringUtils.isNotBlank(additionalArgs)) {
@@ -149,7 +144,7 @@ public class CliWrapper implements OctopusCliExecutor {
 
         if (StringUtils.isNotBlank(overwriteMode)) {
             args.add("--overwrite-mode");
-            args.add(overwriteMode);
+            args.add(convertLegacyOverwriteMode(overwriteMode));
         }
 
         if (StringUtils.isNotBlank(additionalArgs)) {
@@ -171,7 +166,7 @@ public class CliWrapper implements OctopusCliExecutor {
 
         // New CLI uses: octopus build-information push
         args.add("build-information");
-        args.add("push");
+        args.add("upload");
 
         // Add common arguments
         addCommonArguments(args, maskedIndices, false);
@@ -193,7 +188,7 @@ public class CliWrapper implements OctopusCliExecutor {
             args.add(filePath);
         }
 
-        if (StringUtils.isNotBlank(overwriteMode)) {
+        if (StringUtils.isNotBlank(convertLegacyOverwriteMode(overwriteMode))) {
             args.add("--overwrite-mode");
             args.add(overwriteMode);
         }
@@ -250,18 +245,18 @@ public class CliWrapper implements OctopusCliExecutor {
             }
         }
 
-        if (waitForDeployment) {
-            args.add("--progress");
+        // if (waitForDeployment) {
+        //     args.add("--progress");
 
-            if (StringUtils.isNotBlank(deploymentTimeout)) {
-                args.add("--deployment-timeout");
-                args.add(deploymentTimeout);
-            }
+        //     if (StringUtils.isNotBlank(deploymentTimeout)) {
+        //         args.add("--deployment-timeout");
+        //         args.add(deploymentTimeout);
+        //     }
 
-            if (cancelOnTimeout) {
-                args.add("--cancel-on-timeout");
-            }
-        }
+        //     if (cancelOnTimeout) {
+        //         args.add("--cancel-on-timeout");
+        //     }
+        // }
 
         if (StringUtils.isNotBlank(additionalArgs)) {
             String[] myArgs = Commandline.translateCommandline(additionalArgs);
@@ -328,47 +323,19 @@ public class CliWrapper implements OctopusCliExecutor {
             args.add(gitCommit);
         }
 
-        if (StringUtils.isNotBlank(deployToEnvironment)) {
-            args.add("--deploy-to");
-            args.add(deployToEnvironment);
-        }
-
-        if (StringUtils.isNotBlank(tenant)) {
-            args.add("--tenant");
-            args.add(tenant);
-        }
-
-        if (StringUtils.isNotBlank(tenantTag)) {
-            args.add("--tenant-tag");
-            args.add(tenantTag);
-        }
-
-        if (variables != null && !variables.isEmpty()) {
-            for (String variable : variables) {
-                args.add("--variable");
-                args.add(variable);
-            }
-        }
-
-        if (waitForDeployment) {
-            args.add("--progress");
-
-            if (StringUtils.isNotBlank(deploymentTimeout)) {
-                args.add("--deployment-timeout");
-                args.add(deploymentTimeout);
-            }
-
-            if (cancelOnTimeout) {
-                args.add("--cancel-on-timeout");
-            }
-        }
-
         if (StringUtils.isNotBlank(additionalArgs)) {
             String[] myArgs = Commandline.translateCommandline(additionalArgs);
             args.addAll(Arrays.asList(myArgs));
         }
 
-        return execute(args, maskedIndices);
+        Result createResult = execute(args, maskedIndices);
+        if (createResult != Result.SUCCESS) {
+            return createResult;
+        }
+
+        return deployRelease(version, deployToEnvironment, tenant, tenantTag,
+                             variables, waitForDeployment, deploymentTimeout,
+                             cancelOnTimeout, additionalArgs);
     }
 
     /**
@@ -488,5 +455,22 @@ public class CliWrapper implements OctopusCliExecutor {
         OctoInstallation.DescriptorImpl descriptor = (OctoInstallation.DescriptorImpl) jenkins
                 .getDescriptor(OctoInstallation.class);
         return descriptor.getInstallation(name).getPathToOctoExe(builtOn, env, taskListener);
+    }
+
+    private static String convertLegacyOverwriteMode(String mode) {
+        if (mode == null) {
+            return "fail";
+        }
+
+        switch (mode) {
+            case "OverwriteExisting":
+                return "overwrite";
+            case "FailIfExists":
+                return "fail";
+            case "IgnoreIfExists":
+                return "ignore";
+            default:
+                return "fail";
+        }
     }
 }
