@@ -204,17 +204,11 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
         return descriptor.getInstallations();
     }
 
-    public static String getOctopusToolPath(String name, Node builtOn, EnvVars env, TaskListener taskListener) {
-        Jenkins jenkins = JenkinsHelpers.getJenkins();
-        OctoInstallation.DescriptorImpl descriptor = (OctoInstallation.DescriptorImpl) jenkins.getDescriptor(OctoInstallation.class);
-        return descriptor.getInstallation(name).getPathToOctoExe(builtOn, env, taskListener);
-    }
-
     public Boolean hasAdvancedOptions() {
         return getVerboseLogging() || (getAdditionalArgs() != null && !getAdditionalArgs().isEmpty());
     }
 
-    List<String> getVariableCommands(@Nonnull Run<?, ?> run, EnvironmentVariableValueInjector envInjector, Log log, String variables) {
+    protected List<String> getVariableCommands(@Nonnull Run<?, ?> run, EnvironmentVariableValueInjector envInjector, Log log, String variables) {
         Properties properties = new Properties();
         if (variables != null && !variables.isEmpty()) {
             try {
@@ -229,7 +223,6 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
 
         for(String variableName : properties.stringPropertyNames()) {
             String variableValue = envInjector.injectEnvironmentVariableValues(properties.getProperty(variableName));
-            variableCommands.add("--variable");
             variableCommands.add(String.format("%s:%s", variableName, variableValue));
         }
 

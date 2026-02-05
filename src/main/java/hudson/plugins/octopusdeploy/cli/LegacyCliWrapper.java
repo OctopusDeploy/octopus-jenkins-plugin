@@ -3,20 +3,9 @@ package hudson.plugins.octopusdeploy.cli;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.Proc;
-import hudson.model.BuildListener;
-import hudson.model.Node;
 import hudson.model.Result;
 import hudson.model.TaskListener;
-import hudson.plugins.octopusdeploy.Log;
-import hudson.plugins.octopusdeploy.OctoInstallation;
-import hudson.plugins.octopusdeploy.OctopusDeployPlugin;
-import hudson.plugins.octopusdeploy.OctopusDeployServer;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
-import hudson.plugins.octopusdeploy.utils.JenkinsHelpers;
-import jenkins.model.Jenkins;
-import jenkins.util.BuildListenerAdapter;
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.types.Commandline;
 
@@ -29,46 +18,15 @@ import static com.google.common.base.Preconditions.checkState;
  * Wrapper class for executing legacy .NET-based Octopus CLI commands.
  * Handles command construction, argument masking, and process execution.
  */
-public class LegacyCliWrapper implements OctopusCliExecutor {
-
-    // Jenkins dependencies
-    private final String toolId;
-    private final FilePath workspace;
-    private final Launcher launcher;
-    private final EnvVars environment;
-    private final TaskListener listener;
-
-    // Common configuration (optional)
-    private final String serverUrl;
-    private final String apiKey;
-    private final String spaceId;
-    private final String projectName;
-    private final boolean verboseLogging;
-    private final boolean ignoreSslErrors;
-
-    /**
-     * Package-private constructor - use OctopusCliWrapperBuilder to create instances
-     */
+public class LegacyCliWrapper extends BaseCliWrapper {
     LegacyCliWrapper(String toolId, FilePath workspace, Launcher launcher,
                      EnvVars environment, TaskListener listener,
                      String serverUrl, String apiKey, String spaceId,
                      String projectName, boolean verboseLogging, boolean ignoreSslErrors) {
-        this.toolId = toolId;
-        this.workspace = workspace;
-        this.launcher = launcher;
-        this.environment = environment;
-        this.listener = listener;
-        this.serverUrl = serverUrl;
-        this.apiKey = apiKey;
-        this.spaceId = spaceId;
-        this.projectName = projectName;
-        this.verboseLogging = verboseLogging;
-        this.ignoreSslErrors = ignoreSslErrors;
+        super(toolId, workspace, launcher, environment, listener,
+              serverUrl, apiKey, spaceId, projectName, verboseLogging, ignoreSslErrors);
     }
 
-    /**
-     * Execute pack command
-     */
     public Result pack(String packageId, String packageVersion, String format,
             String sourcePath, List<String> includePaths, String outputPath,
             boolean overwriteExisting, String additionalArgs)
@@ -76,6 +34,8 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
 
         List<String> args = new ArrayList<>();
         Set<Integer> maskedIndices = new HashSet<>();
+
+        args.add("pack");
 
         // Add common arguments
         addCommonArguments(args, maskedIndices, false);
@@ -122,17 +82,16 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
             args.addAll(Arrays.asList(myArgs));
         }
 
-        return execute("pack", args, maskedIndices);
+        return execute(args, maskedIndices).toResult();
     }
 
-    /**
-     * Execute push command
-     */
     public Result push(List<String> packagePaths, String overwriteMode, String additionalArgs)
             throws IOException, InterruptedException {
 
         List<String> args = new ArrayList<>();
         Set<Integer> maskedIndices = new HashSet<>();
+
+        args.add("push");
 
         // Add common arguments
         addCommonArguments(args, maskedIndices, false); // push doesn't need project
@@ -154,12 +113,9 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
             args.addAll(Arrays.asList(myArgs));
         }
 
-        return execute("push", args, maskedIndices);
+        return execute(args, maskedIndices).toResult();
     }
 
-    /**
-     * Execute build-information push command
-     */
     public Result pushBuildInformation(List<String> packageIds, String version,
             String filePath, String overwriteMode,
             String additionalArgs)
@@ -167,6 +123,8 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
 
         List<String> args = new ArrayList<>();
         Set<Integer> maskedIndices = new HashSet<>();
+
+        args.add("build-information");
 
         // Add common arguments
         addCommonArguments(args, maskedIndices, false); // build-information doesn't need project
@@ -198,12 +156,9 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
             args.addAll(Arrays.asList(myArgs));
         }
 
-        return execute("build-information", args, maskedIndices);
+        return execute(args, maskedIndices).toResult();
     }
 
-    /**
-     * Execute deploy-release command
-     */
     public Result deployRelease(String version, String environment, String tenant,
             String tenantTag, List<String> variables,
             boolean waitForDeployment, String deploymentTimeout,
@@ -212,6 +167,8 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
 
         List<String> args = new ArrayList<>();
         Set<Integer> maskedIndices = new HashSet<>();
+
+        args.add("deploy-release");
 
         // Add common arguments (includes project)
         addCommonArguments(args, maskedIndices, true);
@@ -261,12 +218,9 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
             args.addAll(Arrays.asList(myArgs));
         }
 
-        return execute("deploy-release", args, maskedIndices);
+        return execute(args, maskedIndices).toResult();
     }
 
-    /**
-     * Execute create-release command
-     */
     public Result createRelease(String version, String channel, String releaseNotes,
             String defaultPackageVersion, List<String> packages,
             String gitRef, String gitCommit,
@@ -278,6 +232,8 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
 
         List<String> args = new ArrayList<>();
         Set<Integer> maskedIndices = new HashSet<>();
+
+        args.add("create-release");
 
         // Add common arguments (includes project)
         addCommonArguments(args, maskedIndices, true);
@@ -359,12 +315,9 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
             args.addAll(Arrays.asList(myArgs));
         }
 
-        return execute("create-release", args, maskedIndices);
+        return execute(args, maskedIndices).toResult();
     }
 
-    /**
-     * Add common arguments to the command
-     */
     private void addCommonArguments(List<String> args, Set<Integer> maskedIndices, boolean includeProject) {
         // Project
         if (includeProject && StringUtils.isNotBlank(projectName)) {
@@ -400,84 +353,5 @@ public class LegacyCliWrapper implements OctopusCliExecutor {
         if (verboseLogging) {
             args.add("--debug");
         }
-    }
-
-    /**
-     * Core execution method
-     */
-    private Result execute(String command, List<String> args, Set<Integer> maskedIndices)
-            throws IOException, InterruptedException {
-
-        BuildListener buildListener = listener instanceof BuildListener
-                ? (BuildListener) listener
-                : new BuildListenerAdapter(listener);
-        Log log = new Log(buildListener);
-
-        // Get CLI path
-        checkState(StringUtils.isNotBlank(toolId),
-                String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Octopus CLI"));
-
-        Node builtOn = workspace.toComputer().getNode();
-        String cliPath = getOctopusToolPath(toolId, builtOn, environment, listener);
-
-        if (StringUtils.isBlank(cliPath)) {
-            log.error("OCTOPUS-JENKINS-INPUT-ERROR-0003: The path for the selected Octopus CLI does not exist.");
-            return Result.FAILURE;
-        }
-
-        // Build full command: [cliPath, command, ...args]
-        List<String> cmdArgs = new ArrayList<>();
-        cmdArgs.add(cliPath);
-        cmdArgs.add(command);
-        cmdArgs.addAll(args);
-
-        // Build mask array
-        boolean[] masks = buildMaskArray(cmdArgs.size(), maskedIndices);
-
-        // Launch process
-        environment.put("OCTOEXTENSION", "");
-        Proc process = launcher.launch()
-                .cmds(cmdArgs)
-                .masks(masks)
-                .stdout(listener)
-                .envs(environment)
-                .pwd(workspace)
-                .start();
-
-        int exitCode = process.join();
-        log.info(String.format("Octopus CLI exit code: %d", exitCode));
-
-        if (exitCode == 0) {
-            return Result.SUCCESS;
-        }
-
-        log.error("Unable to create or deploy release. Please check the build log for details on the error.");
-        return Result.FAILURE;
-    }
-
-    /**
-     * Build mask array from set of masked indices
-     */
-    private boolean[] buildMaskArray(int size, Set<Integer> maskedIndices) {
-        Boolean[] masks = new Boolean[size];
-        Arrays.fill(masks, Boolean.FALSE);
-
-        for (Integer index : maskedIndices) {
-            if (index < size) {
-                masks[index] = Boolean.TRUE;
-            }
-        }
-
-        return ArrayUtils.toPrimitive(masks);
-    }
-
-    /**
-     * Get Octopus tool path
-     */
-    private static String getOctopusToolPath(String name, Node builtOn, EnvVars env, TaskListener taskListener) {
-        Jenkins jenkins = JenkinsHelpers.getJenkins();
-        OctoInstallation.DescriptorImpl descriptor = (OctoInstallation.DescriptorImpl) jenkins
-                .getDescriptor(OctoInstallation.class);
-        return descriptor.getInstallation(name).getPathToOctoExe(builtOn, env, taskListener);
     }
 }

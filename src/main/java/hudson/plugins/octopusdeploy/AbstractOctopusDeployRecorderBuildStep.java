@@ -158,12 +158,6 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder imp
         return cancelOnTimeout;
     }
 
-    public static String getOctopusToolPath(String name, Node builtOn, EnvVars env, TaskListener taskListener) {
-        Jenkins jenkins = JenkinsHelpers.getJenkins();
-        OctoInstallation.DescriptorImpl descriptor = (OctoInstallation.DescriptorImpl) jenkins.getDescriptor(OctoInstallation.class);
-        return descriptor.getInstallation(name).getPathToOctoExe(builtOn, env, taskListener);
-    }
-
     public Boolean hasAdvancedOptions() {
         return getVerboseLogging() || (getAdditionalArgs() != null && !getAdditionalArgs().isEmpty());
     }

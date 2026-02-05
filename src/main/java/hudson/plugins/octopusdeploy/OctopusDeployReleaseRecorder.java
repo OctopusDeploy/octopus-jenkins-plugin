@@ -735,7 +735,6 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
             return names;
         }
 
-
         /**
          * Data binding that returns all possible tenant names to be used in the tenant autocomplete.
          * @param serverId The id of OctopusDeployServer in the configuration.

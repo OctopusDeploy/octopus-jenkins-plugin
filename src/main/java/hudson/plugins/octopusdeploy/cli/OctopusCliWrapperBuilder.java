@@ -3,11 +3,16 @@ package hudson.plugins.octopusdeploy.cli;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
+import hudson.Proc;
+import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.plugins.octopusdeploy.OctopusDeployPlugin;
 import hudson.plugins.octopusdeploy.OctopusDeployServer;
+import hudson.plugins.octopusdeploy.OctoInstallation;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
 import org.apache.commons.lang.StringUtils;
+import java.util.*;
+import java.io.IOException;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -30,10 +35,9 @@ public class OctopusCliWrapperBuilder {
     private String projectName;
     private boolean verboseLogging;
     private boolean ignoreSslErrors;
-    private boolean useNewCli = false;
 
     public OctopusCliWrapperBuilder(String toolId, FilePath workspace, Launcher launcher,
-                                    EnvVars environment, TaskListener listener) {
+            EnvVars environment, TaskListener listener) {
         this.toolId = toolId;
         this.workspace = workspace;
         this.launcher = launcher;
@@ -41,9 +45,6 @@ public class OctopusCliWrapperBuilder {
         this.listener = listener;
     }
 
-    /**
-     * Configure from server ID - looks up server configuration and extracts URL, API key, SSL settings
-     */
     public OctopusCliWrapperBuilder serverId(String serverId) {
         OctopusDeployServer server = OctopusDeployPlugin.getOctopusDeployServer(serverId);
         String serverUrl = server.getUrl();
@@ -91,39 +92,88 @@ public class OctopusCliWrapperBuilder {
         return this;
     }
 
-    /**
-     * Set whether to use the new Golang-based CLI (true) or legacy .NET CLI (false).
-     * Defaults to false (legacy CLI).
-     */
-    public OctopusCliWrapperBuilder useNewCli(boolean useNewCli) {
-        this.useNewCli = useNewCli;
-        return this;
-    }
-
-    /**
-     * Build the CLI executor instance.
-     * Returns either LegacyCliWrapper or CliWrapper based on useNewCli flag.
-     */
     public OctopusCliExecutor build() {
-        if (useNewCli) {
-            return new CliWrapper(toolId, workspace, launcher, environment, listener,
+        CliType t;
+        try {
+            t = inferCliType();
+        } catch (IOException | InterruptedException e) {
+            throw new IllegalStateException("Failed infering Octopus CLI type", e);
+        }
+
+        switch (t) {
+            case Current:
+                return new CliWrapper(toolId, workspace, launcher, environment, listener,
                     serverUrl, apiKey, spaceId, projectName, verboseLogging, ignoreSslErrors);
-        } else {
-            return new LegacyCliWrapper(toolId, workspace, launcher, environment, listener,
+            case Legacy:
+                return new LegacyCliWrapper(toolId, workspace, launcher, environment, listener,
                     serverUrl, apiKey, spaceId, projectName, verboseLogging, ignoreSslErrors);
+            default:
+                throw new IllegalStateException("Unexpected CLI type: " + t);
         }
     }
 
     // Package-private getters for wrapper constructors
-    String getToolId() { return toolId; }
-    FilePath getWorkspace() { return workspace; }
-    Launcher getLauncher() { return launcher; }
-    EnvVars getEnvironment() { return environment; }
-    TaskListener getListener() { return listener; }
-    String getServerUrl() { return serverUrl; }
-    String getApiKey() { return apiKey; }
-    String getSpaceId() { return spaceId; }
-    String getProjectName() { return projectName; }
-    boolean isVerboseLogging() { return verboseLogging; }
-    boolean isIgnoreSslErrors() { return ignoreSslErrors; }
+    String getToolId() {
+        return toolId;
+    }
+
+    FilePath getWorkspace() {
+        return workspace;
+    }
+
+    Launcher getLauncher() {
+        return launcher;
+    }
+
+    EnvVars getEnvironment() {
+        return environment;
+    }
+
+    TaskListener getListener() {
+        return listener;
+    }
+
+    String getServerUrl() {
+        return serverUrl;
+    }
+
+    String getApiKey() {
+        return apiKey;
+    }
+
+    String getSpaceId() {
+        return spaceId;
+    }
+
+    String getProjectName() {
+        return projectName;
+    }
+
+    boolean isVerboseLogging() {
+        return verboseLogging;
+    }
+
+    boolean isIgnoreSslErrors() {
+        return ignoreSslErrors;
+    }
+
+    private CliType inferCliType() throws IOException, InterruptedException {
+        Node builtOn = workspace.toComputer().getNode();
+        String cliPath = OctoInstallation.getOctopusToolPath(toolId, builtOn, environment, listener);
+        List<String> cmdArgs = new ArrayList<>();
+        cmdArgs.add(cliPath);
+        cmdArgs.add("config");
+        cmdArgs.add("list");
+
+        Proc process = launcher.launch()
+                .cmds(cmdArgs)
+                .start();
+
+        int exitCode = process.join();
+        if (exitCode == 0) {
+            return CliType.Current;
+        } else {
+            return CliType.Legacy;
+        }
+    }
 }
