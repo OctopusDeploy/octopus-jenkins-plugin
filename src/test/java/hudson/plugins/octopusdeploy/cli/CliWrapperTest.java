@@ -353,6 +353,137 @@ public class CliWrapperTest {
         assertThat(loginMasked).isNotEmpty();
     }
 
+    @Test
+    public void deployRelease_withWaitForDeployment_callsExecuteForTaskWait() throws IOException, InterruptedException {
+        // Arrange
+        String version = "1.0.0";
+        String environment = "Production";
+        String tenant = "TenantA";
+        String tenantTag = "Region/US";
+        List<String> variables = Arrays.asList("var1=value1");
+        boolean waitForDeployment = true;
+        String deploymentTimeout = "00:15:30"; // 15 minutes 30 seconds
+        boolean cancelOnTimeout = true;
+        String additionalArgs = null;
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<String>> argsCaptor = ArgumentCaptor.forClass(List.class);
+
+        // Mock the deploy execute call to return JSON with ServerTaskId
+        String deployResultJson = "[{\"ServerTaskId\":\"ServerTasks-12345\"}]";
+        doReturn(new CliExecutionResult("", 0))
+                .doReturn(new CliExecutionResult(deployResultJson, 0))
+                .doReturn(new CliExecutionResult("", 0))
+                .when(cliWrapper)
+                .execute(anyList(), anySet());
+
+        // Act
+        Result result = cliWrapper.deployRelease(version, environment, tenant, tenantTag,
+                variables, waitForDeployment, deploymentTimeout, cancelOnTimeout, additionalArgs);
+
+        // Assert
+        assertThat(result).isEqualTo(Result.SUCCESS);
+
+        // Verify execute was called three times: login, deploy, task wait
+        verify(cliWrapper, times(3)).execute(argsCaptor.capture(), anySet());
+
+        List<List<String>> allArgs = argsCaptor.getAllValues();
+
+        // Verify the first call is login
+        List<String> loginArgs = allArgs.get(0);
+        assertThat(loginArgs).contains("login");
+
+        // Verify the second call is deploy
+        List<String> deployArgs = allArgs.get(1);
+        assertThat(deployArgs).containsSequence("release", "deploy");
+        assertThat(deployArgs).contains("--project", "TestProject");
+        assertThat(deployArgs).contains("--version", version);
+        assertThat(deployArgs).contains("--environment", environment);
+
+        // Verify the third call is task wait
+        List<String> waitArgs = allArgs.get(2);
+        assertThat(waitArgs).containsSequence("task", "wait");
+        assertThat(waitArgs).contains("ServerTasks-12345");
+        assertThat(waitArgs).contains("--timeout", "930"); // 15*60 + 30 = 930 seconds
+        assertThat(waitArgs).contains("--cancel-on-timeout");
+        assertThat(waitArgs).contains("--space", "Spaces-1");
+        assertThat(waitArgs).contains("--output-format", "json");
+    }
+
+    @Test
+    public void createRelease_withDeployToEnvironment_callsDeployRelease() throws IOException, InterruptedException {
+        // Arrange
+        String version = "1.0.0";
+        String channel = "Default";
+        String releaseNotes = "Release notes";
+        String defaultPackageVersion = "1.0.0";
+        List<String> packages = Collections.singletonList("Package1:1.0.1");
+        String gitRef = "refs/heads/main";
+        String gitCommit = "abc123";
+        String deployToEnvironment = "Development"; // Deploy after creating release
+        String tenant = "TenantB";
+        String tenantTag = "Region/EU";
+        List<String> variables = Arrays.asList("var1=value1", "var2=value2");
+        boolean waitForDeployment = false;
+        String deploymentTimeout = null;
+        boolean cancelOnTimeout = false;
+        String additionalArgs = "--debug";
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<String>> argsCaptor = ArgumentCaptor.forClass(List.class);
+
+        // Act
+        Result result = cliWrapper.createRelease(version, channel, releaseNotes,
+                defaultPackageVersion, packages, gitRef, gitCommit,
+                deployToEnvironment, tenant, tenantTag, variables,
+                waitForDeployment, deploymentTimeout, cancelOnTimeout, additionalArgs);
+
+        // Assert
+        assertThat(result).isEqualTo(Result.SUCCESS);
+
+        // Verify execute was called four times:
+        // 1. login (from createRelease)
+        // 2. create release
+        // 3. login (from deployRelease)
+        // 4. deploy
+        verify(cliWrapper, times(4)).execute(argsCaptor.capture(), anySet());
+
+        List<List<String>> allArgs = argsCaptor.getAllValues();
+
+        // Verify the first call is login
+        List<String> loginArgs1 = allArgs.get(0);
+        assertThat(loginArgs1).contains("login");
+
+        // Verify the second call is create release
+        List<String> createArgs = allArgs.get(1);
+        assertThat(createArgs).containsSequence("release", "create");
+        assertThat(createArgs).contains("--project", "TestProject");
+        assertThat(createArgs).contains("--version", version);
+        assertThat(createArgs).contains("--channel", channel);
+        assertThat(createArgs).contains("--release-notes", releaseNotes);
+        assertThat(createArgs).contains("--package-version", defaultPackageVersion);
+        assertThat(createArgs).contains("--package", "Package1:1.0.1");
+        assertThat(createArgs).contains("--git-ref", gitRef);
+        assertThat(createArgs).contains("--git-commit", gitCommit);
+        assertThat(createArgs).contains("--debug");
+
+        // Verify the third call is login (from deployRelease)
+        List<String> loginArgs2 = allArgs.get(2);
+        assertThat(loginArgs2).contains("login");
+
+        // Verify the fourth call is deploy with all the deployment parameters
+        List<String> deployArgs = allArgs.get(3);
+        assertThat(deployArgs).containsSequence("release", "deploy");
+        assertThat(deployArgs).contains("--project", "TestProject");
+        assertThat(deployArgs).contains("--version", version);
+        assertThat(deployArgs).contains("--environment", deployToEnvironment);
+        assertThat(deployArgs).contains("--tenant", tenant);
+        assertThat(deployArgs).contains("--tenant-tag", tenantTag);
+        assertThat(deployArgs).contains("--variable", "var1=value1");
+        assertThat(deployArgs).contains("--variable", "var2=value2");
+        assertThat(deployArgs).contains("--debug");
+    }
+
     /**
      * Testable wrapper that exposes the protected execute method for testing
      */
