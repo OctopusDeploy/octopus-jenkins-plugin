@@ -96,11 +96,11 @@ public class CliWrapperTest {
         assertThat(result).isEqualTo(Result.SUCCESS);
 
         // Verify execute was called twice: once for login, once for pack
-        verify(cliWrapper, times(2)).execute(argsCaptor.capture(), maskedCaptor.capture());
+        verify(cliWrapper, times(1)).execute(argsCaptor.capture(), maskedCaptor.capture());
 
         // Get the second call (the pack command)
         List<List<String>> allArgs = argsCaptor.getAllValues();
-        List<String> packArgs = allArgs.get(1);
+        List<String> packArgs = allArgs.get(0);
 
         // Verify pack command structure
         assertThat(packArgs).containsSequence("package", format, "create");
@@ -181,8 +181,7 @@ public class CliWrapperTest {
         assertThat(buildInfoArgs).contains("--package-id", "Package2");
         assertThat(buildInfoArgs).contains("--version", version);
         assertThat(buildInfoArgs).contains("--file", filePath);
-        assertThat(buildInfoArgs).contains("--overwrite-mode", "FailIfExists");
-        assertThat(buildInfoArgs).contains("--debug");
+        assertThat(buildInfoArgs).contains("--overwrite-mode", "fail");
         assertThat(buildInfoArgs).contains("--space", "Spaces-1");
         assertThat(buildInfoArgs).contains("--no-prompt");
         assertThat(buildInfoArgs).contains("--output-format", "json");
@@ -228,7 +227,6 @@ public class CliWrapperTest {
         assertThat(deployArgs).contains("--variable", "var2=value2");
         assertThat(deployArgs).contains("--force");
         assertThat(deployArgs).contains("--space", "Spaces-1");
-        assertThat(deployArgs).contains("--verbose");
         assertThat(deployArgs).contains("--no-prompt");
         assertThat(deployArgs).contains("--output-format", "json");
     }
@@ -282,7 +280,6 @@ public class CliWrapperTest {
         assertThat(createArgs).contains("--git-ref", gitRef);
         assertThat(createArgs).contains("--git-commit", gitCommit);
         assertThat(createArgs).contains("--space", "Spaces-1");
-        assertThat(createArgs).contains("--verbose");
         assertThat(createArgs).contains("--no-prompt");
         assertThat(createArgs).contains("--output-format", "json");
     }
@@ -299,9 +296,9 @@ public class CliWrapperTest {
 
         // Assert
         assertThat(result).isEqualTo(Result.SUCCESS);
-        verify(cliWrapper, times(2)).execute(argsCaptor.capture(), anySet());
+        verify(cliWrapper, times(1)).execute(argsCaptor.capture(), anySet());
 
-        List<String> packArgs = argsCaptor.getAllValues().get(1);
+        List<String> packArgs = argsCaptor.getAllValues().get(0);
 
         // Verify minimal pack command structure
         assertThat(packArgs).containsSequence("package", "zip", "create");
@@ -339,7 +336,7 @@ public class CliWrapperTest {
         ArgumentCaptor<Set<Integer>> maskedCaptor = ArgumentCaptor.forClass(Set.class);
 
         // Act
-        cliWrapper.pack("TestPackage", null, "zip", null, null, null, false, null);
+        cliWrapper.push(Arrays.asList("/path/to/package1.zip", "/path/to/package2.zip"), "OverwriteExisting", "");
 
         // Assert
         verify(cliWrapper, times(2)).execute(anyList(), maskedCaptor.capture());

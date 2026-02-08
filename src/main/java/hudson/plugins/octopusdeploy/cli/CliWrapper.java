@@ -39,11 +39,6 @@ public class CliWrapper extends BaseCliWrapper {
             String sourcePath, List<String> includePaths, String outputPath,
             boolean overwriteExisting, String additionalArgs)
             throws IOException, InterruptedException {
-        Result loginRes = login();
-        if (loginRes != Result.SUCCESS) {
-            return loginRes;
-        }
-
         List<String> args = new ArrayList<>();
         Set<Integer> maskedIndices = new HashSet<>();
 
@@ -56,7 +51,7 @@ public class CliWrapper extends BaseCliWrapper {
         args.add("create");
 
         // Add common arguments
-        addCommonArguments(args, maskedIndices, false);
+        addCommonArguments(args, false);
 
         args.add("--id");
         args.add(packageId);
@@ -111,7 +106,7 @@ public class CliWrapper extends BaseCliWrapper {
         args.add("upload");
 
         // Add common arguments
-        addCommonArguments(args, maskedIndices, false);
+        addCommonArguments(args, false);
 
         if (packagePaths != null && !packagePaths.isEmpty()) {
             for (String packagePath : packagePaths) {
@@ -151,7 +146,7 @@ public class CliWrapper extends BaseCliWrapper {
         args.add("upload");
 
         // Add common arguments
-        addCommonArguments(args, maskedIndices, false);
+        addCommonArguments(args, false);
 
         if (packageIds != null && !packageIds.isEmpty()) {
             for (String packageId : packageIds) {
@@ -172,13 +167,14 @@ public class CliWrapper extends BaseCliWrapper {
 
         if (StringUtils.isNotBlank(convertLegacyOverwriteMode(overwriteMode))) {
             args.add("--overwrite-mode");
-            args.add(overwriteMode);
+            args.add(convertLegacyOverwriteMode(overwriteMode));
         }
 
         if (StringUtils.isNotBlank(additionalArgs)) {
             String[] myArgs = Commandline.translateCommandline(additionalArgs);
             args.addAll(Arrays.asList(myArgs));
         }
+
 
         return execute(args, maskedIndices).toResult();
     }
@@ -202,7 +198,7 @@ public class CliWrapper extends BaseCliWrapper {
         args.add("deploy");
 
         // Add common arguments (includes project)
-        addCommonArguments(args, maskedIndices, true);
+        addCommonArguments(args, true);
 
         if (StringUtils.isNotBlank(version)) {
             args.add("--version");
@@ -273,7 +269,7 @@ public class CliWrapper extends BaseCliWrapper {
         args.add("create");
 
         // Add common arguments (includes project)
-        addCommonArguments(args, maskedIndices, true);
+        addCommonArguments(args, true);
 
         if (StringUtils.isNotBlank(version)) {
             args.add("--version");
@@ -347,8 +343,8 @@ public class CliWrapper extends BaseCliWrapper {
         // API Key (masked)
         if (StringUtils.isNotBlank(apiKey)) {
             args.add("--api-key");
-            maskedIndices.add(args.size()); // Mask the next value
             args.add(apiKey);
+            maskedIndices.add(args.size()); // size is +1 of the apiKey index, but later we also add the binary path at the start of the args list, so it works out
         }
 
         // SSL
@@ -401,7 +397,7 @@ public class CliWrapper extends BaseCliWrapper {
     /**
      * Add common arguments to the command
      */
-    private void addCommonArguments(List<String> args, Set<Integer> maskedIndices, boolean includeProject) {
+    private void addCommonArguments(List<String> args, boolean includeProject) {
         // Project
         if (includeProject && StringUtils.isNotBlank(projectName)) {
             args.add("--project");
@@ -412,11 +408,6 @@ public class CliWrapper extends BaseCliWrapper {
         if (StringUtils.isNotBlank(spaceId)) {
             args.add("--space");
             args.add(spaceId);
-        }
-
-        // Debug
-        if (verboseLogging) {
-            args.add("--verbose");
         }
 
         // No prompt & JSON output
