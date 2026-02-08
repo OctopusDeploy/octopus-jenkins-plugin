@@ -7,12 +7,12 @@ import hudson.model.Result;
 import hudson.model.TaskListener;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
 import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.types.Commandline;
 
 import java.io.IOException;
+import java.time.LocalTime;
 import java.util.*;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -244,8 +244,8 @@ public class CliWrapper extends BaseCliWrapper {
         if (waitForDeployment) {
             String stdout = deployResult.getStdout();
             JSONArray json = (JSONArray) JSONSerializer.toJSON(stdout);
-            String deploymentId = json.getJSONObject(0).getString("DeploymentId");
-            return waitForDeployment(deploymentId, deploymentTimeout, cancelOnTimeout);
+            String taskId = json.getJSONObject(0).getString("ServerTaskId");
+            return waitForDeployment(taskId, deploymentTimeout, cancelOnTimeout);
         }
 
         return deployResult.toResult();
@@ -364,7 +364,7 @@ public class CliWrapper extends BaseCliWrapper {
         return execute(args, maskedIndices).toResult();
     }
 
-    private Result waitForDeployment(String deploymentId, String deploymentTimeout, boolean cancelOnTimeout)
+    private Result waitForDeployment(String taskId, String deploymentTimeout, boolean cancelOnTimeout)
             throws IOException, InterruptedException {
         List<String> args = new ArrayList<>();
         Set<Integer> maskedIndices = new HashSet<>();
@@ -373,19 +373,22 @@ public class CliWrapper extends BaseCliWrapper {
         args.add("task");
         args.add("wait");
 
-        args.add(deploymentId);
+        args.add(taskId);
 
         if (StringUtils.isNotBlank(deploymentTimeout)) {
+            LocalTime time = LocalTime.parse(deploymentTimeout);
             args.add("--timeout");
-            args.add(deploymentTimeout);
+            args.add(String.valueOf(time.toSecondOfDay()));
         }
 
         if (cancelOnTimeout) {
             args.add("--cancel-on-timeout");
         }
 
-        // No prompt & JSON output
-        args.add("--no-prompt");
+        args.add("--space");
+        args.add(spaceId);
+
+        // JSON output
         args.add("--output-format");
         args.add("json");
 
