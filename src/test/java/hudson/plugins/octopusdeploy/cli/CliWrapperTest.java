@@ -333,13 +333,21 @@ public class CliWrapperTest {
     public void execute_isMaskedForLogin() throws IOException, InterruptedException {
         // Arrange
         @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<String>> argsCaptor = ArgumentCaptor.forClass(List.class);
+        @SuppressWarnings("unchecked")
         ArgumentCaptor<Set<Integer>> maskedCaptor = ArgumentCaptor.forClass(Set.class);
 
         // Act
         cliWrapper.push(Arrays.asList("/path/to/package1.zip", "/path/to/package2.zip"), "OverwriteExisting", "");
 
         // Assert
-        verify(cliWrapper, times(2)).execute(anyList(), maskedCaptor.capture());
+        verify(cliWrapper, times(2)).execute(argsCaptor.capture(), maskedCaptor.capture());
+
+        // Get the first call (login command)
+        List<List<String>> allArgs = argsCaptor.getAllValues();
+        List<String> loginArgs = allArgs.get(0);
+        int apiKeyIndex = loginArgs.indexOf("--api-key") + 1; // API key value is after the --apiKey flag
+
 
         // Get the first call (login command) and verify API key is masked
         List<Set<Integer>> allMasked = maskedCaptor.getAllValues();
@@ -347,6 +355,7 @@ public class CliWrapperTest {
 
         // The login command masks the API key position
         assertThat(loginMasked).isNotEmpty();
+        assertThat(loginMasked).contains(apiKeyIndex + 1); // +1 because the binary path is added at the start of the args list, so it shifts the indices by 1
     }
 
     @Test
