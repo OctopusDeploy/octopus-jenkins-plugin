@@ -39,14 +39,6 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
      */
     protected transient OctopusDeployServer octopusDeployServer;
 
-    // public OctopusDeployServer getOctopusDeployServer() {
-    // if (octopusDeployServer == null) {
-    // octopusDeployServer = getOctopusDeployServer(getServerId());
-    // }
-
-    // return octopusDeployServer;
-    // }
-
     /**
      * The serverId to use for this deployment
      */

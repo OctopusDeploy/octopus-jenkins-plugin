@@ -382,7 +382,7 @@ public class LegacyCliWrapperTest {
         assertThat(deployArgs).contains("--project", "TestProject");
         assertThat(deployArgs).contains("--version", version);
         assertThat(deployArgs).contains("--deployTo", environment);
-        assertThat(deployArgs).contains("--waitForDeployment");
+        assertThat(deployArgs).contains("--progress");
         assertThat(deployArgs).contains("--deploymentTimeout", deploymentTimeout);
         assertThat(deployArgs).contains("--cancelOnTimeout");
     }
@@ -439,7 +439,7 @@ public class LegacyCliWrapperTest {
         assertThat(createArgs).contains("--tenantTag", tenantTag);
         assertThat(createArgs).contains("--variable", "var1=value1");
         assertThat(createArgs).contains("--variable", "var2=value2");
-        assertThat(createArgs).contains("--waitForDeployment");
+        assertThat(createArgs).contains("--progress");
         assertThat(createArgs).contains("--deploymentTimeout", deploymentTimeout);
         assertThat(createArgs).doesNotContain("--cancelOnTimeout"); // False, so not included
         assertThat(createArgs).contains("--debug");

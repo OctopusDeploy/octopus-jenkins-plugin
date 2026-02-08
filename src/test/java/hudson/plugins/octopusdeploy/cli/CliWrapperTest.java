@@ -144,8 +144,7 @@ public class CliWrapperTest {
         assertThat(pushArgs).contains("--package", "/path/to/package1.zip");
         assertThat(pushArgs).contains("--package", "/path/to/package2.zip");
         assertThat(pushArgs).contains("--overwrite-mode", "overwrite");
-        assertThat(pushArgs).contains("--timeout");
-        assertThat(pushArgs).contains("300");
+        assertThat(pushArgs).contains("--timeout", "300");
         assertThat(pushArgs).contains("--space", "Spaces-1");
         assertThat(pushArgs).contains("--no-prompt");
         assertThat(pushArgs).contains("--output-format", "json");
@@ -404,6 +403,7 @@ public class CliWrapperTest {
         List<String> waitArgs = allArgs.get(2);
         assertThat(waitArgs).containsSequence("task", "wait");
         assertThat(waitArgs).contains("ServerTasks-12345");
+        assertThat(waitArgs).contains("--progress"); // 15*60 + 30 = 930 seconds
         assertThat(waitArgs).contains("--timeout", "930"); // 15*60 + 30 = 930 seconds
         assertThat(waitArgs).contains("--cancel-on-timeout");
         assertThat(waitArgs).contains("--space", "Spaces-1");

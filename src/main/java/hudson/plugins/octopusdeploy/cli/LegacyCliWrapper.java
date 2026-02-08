@@ -201,7 +201,7 @@ public class LegacyCliWrapper extends BaseCliWrapper {
         }
 
         if (waitForDeployment) {
-            args.add("--waitForDeployment");
+            args.add("--progress");
 
             if (StringUtils.isNotBlank(deploymentTimeout)) {
                 args.add("--deploymentTimeout");
@@ -298,7 +298,7 @@ public class LegacyCliWrapper extends BaseCliWrapper {
         }
 
         if (waitForDeployment) {
-            args.add("--waitForDeployment");
+            args.add("--progress");
 
             if (StringUtils.isNotBlank(deploymentTimeout)) {
                 args.add("--deploymentTimeout");

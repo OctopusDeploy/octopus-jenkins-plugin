@@ -374,6 +374,7 @@ public class CliWrapper extends BaseCliWrapper {
         args.add("wait");
 
         args.add(taskId);
+        args.add("--progress");
 
         if (StringUtils.isNotBlank(deploymentTimeout)) {
             LocalTime time = LocalTime.parse(deploymentTimeout);
@@ -388,7 +389,8 @@ public class CliWrapper extends BaseCliWrapper {
         args.add("--space");
         args.add(spaceId);
 
-        // JSON output
+        // No prompt & JSON output
+        args.add("--no-prompt");
         args.add("--output-format");
         args.add("json");
 
