@@ -3,7 +3,7 @@ Connecting [Octopus Deploy](https://octopusdeploy.com/) to the [Jenkins](https:/
 
 Using Jenkins and Octopus Deploy together, you can:
 
-  Use Jenkins to compile, test, and package your applications.
+- Use Jenkins to compile, test, and package your applications.
 - Automatically trigger deployments in Octopus from Jenkins whenever a build completes.
 - Automatically fail a build in Jenkins if the deployment in Octopus fails.
 - Securely deploy your applications with Octopus Deploy across your infrastructure.
