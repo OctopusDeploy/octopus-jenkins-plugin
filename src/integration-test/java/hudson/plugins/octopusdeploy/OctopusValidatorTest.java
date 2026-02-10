@@ -231,7 +231,7 @@ class OctopusValidatorTest extends BaseIntegrationTest {
 
     @Test
     public void validateServerIdWithNoConfiguredServersFailsValidation() {
-        postBuildStepMockedStatic
+        octopusDeployPluginMockedStatic
                 .when(OctopusDeployPlugin::getOctopusDeployServersIds)
                 .thenReturn(Collections.EMPTY_LIST);
 
@@ -244,7 +244,7 @@ class OctopusValidatorTest extends BaseIntegrationTest {
 
     @Test
     public void validateServerIdWithNoMatchingServersFailsValidation() {
-        postBuildStepMockedStatic
+        octopusDeployPluginMockedStatic
                 .when(OctopusDeployPlugin::getOctopusDeployServersIds)
                 .thenReturn(Collections.singletonList("someId"));
 
@@ -257,7 +257,7 @@ class OctopusValidatorTest extends BaseIntegrationTest {
 
     @Test
     public void validateServerIdWithMatchingServerPassesValidation() {
-        postBuildStepMockedStatic
+        octopusDeployPluginMockedStatic
                 .when(OctopusDeployPlugin::getOctopusDeployServersIds)
                 .thenReturn(Collections.singletonList("someId"));
 
