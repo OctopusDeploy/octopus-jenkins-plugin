@@ -24,6 +24,7 @@ import com.octopus.sdk.model.tagset.TagSetResourceWithLinks;
 import com.octopus.sdk.model.tenant.TenantResource;
 import com.octopus.testsupport.BaseOctopusServerEnabledTest;
 import hudson.plugins.octopusdeploy.AbstractOctopusDeployRecorderPostBuildStep;
+import hudson.plugins.octopusdeploy.OctopusDeployPlugin;
 import hudson.plugins.octopusdeploy.OctopusDeployServer;
 import jenkins.model.Jenkins;
 import org.junit.jupiter.api.AfterAll;
@@ -65,7 +66,7 @@ public class BaseIntegrationTest extends BaseOctopusServerEnabledTest {
         postBuildStepMockedStatic = Mockito.mockStatic(AbstractOctopusDeployRecorderPostBuildStep.class);
         postBuildStepMockedStatic
                 .when(() ->
-                        AbstractOctopusDeployRecorderPostBuildStep.getOctopusDeployServer(JENKINS_OCTOPUS_SERVER_ID))
+                        OctopusDeployPlugin.getOctopusDeployServer(JENKINS_OCTOPUS_SERVER_ID))
                 .thenReturn(new OctopusDeployServer(JENKINS_OCTOPUS_SERVER_ID,
                         server.getOctopusUrl(), server.getApiKey(), true));
 
