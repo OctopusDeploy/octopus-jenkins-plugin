@@ -120,7 +120,7 @@ jobs:
       - name: Wait for Octopus Deploy to be ready
         run: |
           timeout 300 bash -c 'until docker logs octopus-server 2>&1 | grep -q "Web server is ready to process requests"; do
-            echo ""=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
+            echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
             docker logs octopus-server --tail 20
             echo ""=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
             echo "Waiting for Octopus Deploy to be ready..."
