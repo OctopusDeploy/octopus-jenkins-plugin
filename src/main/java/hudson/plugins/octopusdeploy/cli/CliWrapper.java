@@ -7,6 +7,7 @@ import hudson.model.Result;
 import hudson.model.TaskListener;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
 import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.types.Commandline;
@@ -175,7 +176,6 @@ public class CliWrapper extends BaseCliWrapper {
             args.addAll(Arrays.asList(myArgs));
         }
 
-
         return execute(args, maskedIndices).toResult();
     }
 
@@ -319,12 +319,18 @@ public class CliWrapper extends BaseCliWrapper {
         }
 
         if (StringUtils.isBlank(deployToEnvironment)) {
-            return Result.SUCCESS;
+            if (StringUtils.isBlank(version)) {
+                String stdout = createResult.getStdout();
+                JSONObject json = (JSONObject) JSONSerializer.toJSON(stdout);
+                version = json.getString("Version");
+            }
+
+            return deployRelease(version, deployToEnvironment, tenant, tenantTag,
+                    variables, waitForDeployment, deploymentTimeout,
+                    cancelOnTimeout, additionalArgs);
         }
 
-        return deployRelease(version, deployToEnvironment, tenant, tenantTag,
-                variables, waitForDeployment, deploymentTimeout,
-                cancelOnTimeout, additionalArgs);
+        return Result.SUCCESS;
     }
 
     private Result login() throws IOException, InterruptedException {
@@ -344,7 +350,8 @@ public class CliWrapper extends BaseCliWrapper {
         if (StringUtils.isNotBlank(apiKey)) {
             args.add("--api-key");
             args.add(apiKey);
-            maskedIndices.add(args.size()); // size is +1 of the apiKey index, but later we also add the binary path at the start of the args list, so it works out
+            maskedIndices.add(args.size()); // size is +1 of the apiKey index, but later we also add the binary path at
+                                            // the start of the args list, so it works out
         }
 
         // SSL
