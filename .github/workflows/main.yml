@@ -146,7 +146,7 @@ jobs:
           echo "api-key=$API_KEY" >> $GITHUB_OUTPUT
 
       - name: Build, Execute Unit Tests & E2E Tests
-        run: ./gradlew build test -Pversion=${{ steps.git-version.outputs.nugetVersion }} --info
+        run: ./gradlew build test -Pversion=${{ steps.git-version.outputs.nugetVersion }}
         env:
           OCTOPUS_SDK_AT_USE_EXISTING_SERVER: true
           OCTOPUS_CLI_PATH: ${{ steps.cli-path.outputs.install-path }}
