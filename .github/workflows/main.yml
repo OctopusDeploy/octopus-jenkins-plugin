@@ -24,7 +24,7 @@ jobs:
     if: ${{ github.ref_name != 'main' || github.event.head_commit.author.username != 'team-integrations-fnm-bot' }}
     env:
       OCTOPUS_API_KEY: ${{ secrets.OCTOPUS_API_KEY }}
-      OCTOPUS_HOST: ${{ secrets.OCTOPUS_URL }}
+      OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
       OCTOPUS_SPACE: Integrations
       # SQL Server settings
       MS_SQL_IMAGE: mcr.microsoft.com/mssql/server
