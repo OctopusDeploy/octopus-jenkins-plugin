@@ -31,11 +31,72 @@ import java.util.logging.Logger;
 import static hudson.plugins.octopusdeploy.services.StringUtil.sanitizeValue;
 
 /**
- * This plugin is only responsible for containing global configuration information
+ * This plugin is only responsible for containing global configuration
+ * information
  * to be used by the ReleaseRecorder and DeploymentRecorder.
+ * 
  * @author badriance
  */
 public class OctopusDeployPlugin extends GlobalPluginConfiguration {
+    public static OctoInstallation[] getOctopusToolInstallations() {
+        Jenkins jenkins = JenkinsHelpers.getJenkins();
+        OctoInstallation.DescriptorImpl descriptor = (OctoInstallation.DescriptorImpl) jenkins
+                .getDescriptor(OctoInstallation.class);
+        return descriptor.getInstallations();
+    }
+
+    /**
+     * Get the list of OctopusDeployServer from OctopusDeployPlugin configuration
+     * 
+     * @return all configured servers
+     */
+    public static List<OctopusDeployServer> getOctopusDeployServers() {
+        Jenkins jenkinsInstance = JenkinsHelpers.getJenkins();
+        OctopusDeployPlugin.DescriptorImpl descriptor = (OctopusDeployPlugin.DescriptorImpl) jenkinsInstance
+                .getDescriptor(OctopusDeployPlugin.class);
+        return descriptor.getOctopusDeployServers();
+    }
+
+    /**
+     * Get the default OctopusDeployServer from OctopusDeployPlugin configuration
+     * 
+     * @return the default server
+     */
+    public static OctopusDeployServer getDefaultOctopusDeployServer() {
+        Jenkins jenkinsInstance = JenkinsHelpers.getJenkins();
+        OctopusDeployPlugin.DescriptorImpl descriptor = (OctopusDeployPlugin.DescriptorImpl) jenkinsInstance
+                .getDescriptor(OctopusDeployPlugin.class);
+        return descriptor.getDefaultOctopusDeployServer();
+    }
+
+    /**
+     * Get the instance of OctopusDeployServer by serverId
+     * 
+     * @param serverId The id of OctopusDeployServer in the configuration.
+     * @return the server by id
+     */
+    public static OctopusDeployServer getOctopusDeployServer(String serverId) {
+        Jenkins jenkinsInstance = JenkinsHelpers.getJenkins();
+        OctopusDeployPlugin.DescriptorImpl descriptor = (OctopusDeployPlugin.DescriptorImpl) jenkinsInstance
+                .getDescriptor(OctopusDeployPlugin.class);
+        return descriptor.getOctopusDeployServer(serverId);
+    }
+
+    public static List<String> getOctopusDeployServersIds() {
+        List<String> ids = new ArrayList<>();
+        for (OctopusDeployServer s : OctopusDeployPlugin.getOctopusDeployServers()) {
+            ids.add(s.getServerId());
+        }
+        return ids;
+    }
+
+    public static List<String> getOctopusToolIds() {
+        List<String> ids = new ArrayList<>();
+        for (OctoInstallation i : OctopusDeployPlugin.getOctopusToolInstallations()) {
+            ids.add(i.getName());
+        }
+        return ids;
+    }
 
     @Extension
     @Symbol("octopusGlobalConfiguration")
@@ -69,6 +130,26 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
                 return octopusDeployServers;
             }
             return Collections.emptyList();
+        }
+
+        /**
+         * Get the instance of OctopusDeployServer by serverId
+         * 
+         * @param serverId The id of OctopusDeployServer in the configuration.
+         * @return the server by id
+         */
+        public OctopusDeployServer getOctopusDeployServer(String serverId) {
+            if (serverId == null || serverId.isEmpty()) {
+                return getDefaultOctopusDeployServer();
+            }
+
+            for (OctopusDeployServer server : getOctopusDeployServers()) {
+                if (server.getServerId().equals(serverId)) {
+                    return server;
+                }
+            }
+
+            return null;
         }
 
         @DataBoundSetter

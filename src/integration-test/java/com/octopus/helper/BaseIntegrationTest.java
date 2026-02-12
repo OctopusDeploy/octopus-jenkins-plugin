@@ -23,7 +23,7 @@ import com.octopus.sdk.model.tagset.TagSetResource;
 import com.octopus.sdk.model.tagset.TagSetResourceWithLinks;
 import com.octopus.sdk.model.tenant.TenantResource;
 import com.octopus.testsupport.BaseOctopusServerEnabledTest;
-import hudson.plugins.octopusdeploy.AbstractOctopusDeployRecorderPostBuildStep;
+import hudson.plugins.octopusdeploy.OctopusDeployPlugin;
 import hudson.plugins.octopusdeploy.OctopusDeployServer;
 import jenkins.model.Jenkins;
 import org.junit.jupiter.api.AfterAll;
@@ -56,16 +56,16 @@ public class BaseIntegrationTest extends BaseOctopusServerEnabledTest {
 
     private OctopusClient client;
 
-    public static MockedStatic<AbstractOctopusDeployRecorderPostBuildStep> postBuildStepMockedStatic;
+    public static MockedStatic<OctopusDeployPlugin> octopusDeployPluginMockedStatic;
     public static MockedStatic<Jenkins> jenkinsMockedStatic;
     public Space space;
 
     @BeforeAll
     public static void setUpMocks() {
-        postBuildStepMockedStatic = Mockito.mockStatic(AbstractOctopusDeployRecorderPostBuildStep.class);
-        postBuildStepMockedStatic
+        octopusDeployPluginMockedStatic = Mockito.mockStatic(OctopusDeployPlugin.class);
+        octopusDeployPluginMockedStatic
                 .when(() ->
-                        AbstractOctopusDeployRecorderPostBuildStep.getOctopusDeployServer(JENKINS_OCTOPUS_SERVER_ID))
+                        OctopusDeployPlugin.getOctopusDeployServer(JENKINS_OCTOPUS_SERVER_ID))
                 .thenReturn(new OctopusDeployServer(JENKINS_OCTOPUS_SERVER_ID,
                         server.getOctopusUrl(), server.getApiKey(), true));
 
@@ -99,7 +99,7 @@ public class BaseIntegrationTest extends BaseOctopusServerEnabledTest {
 
     @AfterAll
     public static void cleanUpMocks() {
-        postBuildStepMockedStatic.close();
+        octopusDeployPluginMockedStatic.close();
         jenkinsMockedStatic.close();
     }
 

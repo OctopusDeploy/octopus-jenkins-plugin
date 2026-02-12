@@ -10,6 +10,8 @@ import com.octopusdeploy.api.data.Environment;
 import com.octopusdeploy.api.data.Project;
 import hudson.*;
 import hudson.model.*;
+import hudson.plugins.octopusdeploy.cli.OctopusCliExecutor;
+import hudson.plugins.octopusdeploy.cli.OctopusCliWrapperBuilder;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
 import hudson.util.*;
 import java.util.logging.Level;
@@ -90,66 +92,59 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         checkState(StringUtils.isNotBlank(environment), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Environment name"));
         checkState(StringUtils.isNotBlank(releaseVersion), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Version"));
 
-        final List<String> commands = new ArrayList<>();
-        commands.add(OctoConstants.Commands.DEPLOY_RELEASE);
-
-        final Iterable<String> environmentNameSplit = Splitter.on(',')
-                .trimResults()
-                .omitEmptyStrings()
-                .split(environment);
-        for(String env : environmentNameSplit) {
-            commands.add("--deployTo");
-            commands.add(env);
-        }
-
-        commands.add("--version");
-        commands.add(releaseVersion);
-
-        if(StringUtils.isNotBlank(tenant)) {
-            Iterable<String> tenantsSplit = Splitter.on(',')
-                    .trimResults()
-                    .omitEmptyStrings()
-                    .split(tenant);
-            for(String t : tenantsSplit) {
-                commands.add("--tenant");
-                commands.add(t);
-            }
-        }
-
-        if(StringUtils.isNotBlank(tenantTag)) {
-            Iterable<String> tenantTagsSplit = Splitter.on(',')
-                    .trimResults()
-                    .omitEmptyStrings()
-                    .split(tenantTag);
-            for (String tag : tenantTagsSplit) {
-                commands.add("--tenanttag");
-                commands.add(tag);
-            }
-        }
-
-        if(waitForDeployment) {
-            commands.add("--progress");
-        }
-
-        commands.addAll(getVariableCommands(run, envInjector, log, variables));
+        // Parse variables
+        List<String> variableCommands = getVariableCommands(run, envInjector, log, variables);
         if (run.getResult() == Result.FAILURE) {
             return;
         }
 
-        commands.addAll(getCommonCommandArguments(envInjector));
+        try {
+            // Parse environment (can be comma-separated, but wrapper expects single value)
+            // For now, take the first environment
+            final Iterable<String> environmentNameSplit = Splitter.on(',')
+                    .trimResults()
+                    .omitEmptyStrings()
+                    .split(environment);
+            String firstEnvironment = environmentNameSplit.iterator().next();
 
-        if(success) {
-            try {
-                final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
-                Result result = launchOcto(workspace, launcher, commands, masks, envVars, listenerAdapter);
-                success = result.equals(Result.SUCCESS);
-                if(success) {
-                    AddBuildSummary(run, log, project, releaseVersion, environment, tenant);
-                }
-            } catch (Exception ex) {
-                log.fatal("Failed to deploy: " + getExceptionMessage(ex));
-                success = false;
+            // Parse tenant (can be comma-separated, but wrapper expects single value)
+            String firstTenant = null;
+            if (StringUtils.isNotBlank(tenant)) {
+                Iterable<String> tenantsSplit = Splitter.on(',')
+                        .trimResults()
+                        .omitEmptyStrings()
+                        .split(tenant);
+                firstTenant = tenantsSplit.iterator().next();
             }
+
+            // Create wrapper
+            OctopusCliExecutor wrapper = new OctopusCliWrapperBuilder(
+                    getToolId(), workspace, launcher, envVars, listenerAdapter)
+                    .serverId(this.serverId)
+                    .spaceId(spaceId)
+                    .projectName(project)
+                    .verboseLogging(verboseLogging)
+                    .build();
+
+            // Execute deploy-release command
+            Result result = wrapper.deployRelease(
+                    releaseVersion,
+                    firstEnvironment,
+                    firstTenant,
+                    tenantTag,
+                    variableCommands,
+                    waitForDeployment,
+                    deploymentTimeout,
+                    cancelOnTimeout,
+                    additionalArgs);
+
+            success = result.equals(Result.SUCCESS);
+            if (success) {
+                AddBuildSummary(run, log, project, releaseVersion, firstEnvironment, firstTenant);
+            }
+        } catch (Exception ex) {
+            log.fatal("Failed to deploy: " + getExceptionMessage(ex));
+            success = false;
         }
 
         if (!success) {
@@ -159,7 +154,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
 
     private void AddBuildSummary(@NotNull Run<?, ?> run, Log log, String project, String releaseVersion, String environment, String tenant) {
         try {
-            OctopusDeployServer octopusDeployServer = getOctopusDeployServer(serverId);
+            OctopusDeployServer octopusDeployServer = OctopusDeployPlugin.getOctopusDeployServer(serverId);
             String serverUrl = octopusDeployServer.getUrl();
             if (serverUrl.endsWith("/")) {
                 serverUrl = serverUrl.substring(0, serverUrl.length() - 1);
@@ -187,10 +182,6 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         }
     }
 
-    private DescriptorImpl getDescriptorImpl() {
-        return ((DescriptorImpl)getDescriptor());
-    }
-
     /**
      * Write the startup header for the logs to show what our inputs are.
      * @param log The logger
@@ -207,75 +198,6 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         log.info("======================");
     }
 
-    /**
-     * Attempts to parse the string as JSON.
-     * returns true on success
-     * @param possiblyJson A string that may be JSON
-     * @return true or false. True if string is valid JSON.
-     */
-    private boolean isTaskJson(String possiblyJson) {
-        try {
-            JSONSerializer.toJSON(possiblyJson);
-            return true;
-        } catch (JSONException ex) {
-            return false;
-        }
-    }
-
-    /**
-     * Returns control when task is complete.
-     * @param json json input
-     * @param api octopus api
-     * @param logger logger
-     * @return the task state for the deployment
-     */
-    private String waitForDeploymentCompletion(JSON json, OctopusApi api, Log logger) {
-        final long WAIT_TIME = 5000;
-        final double WAIT_RANDOM_SCALER = 100.0;
-        JSONObject jsonObj = (JSONObject)json;
-        String id = jsonObj.getString("TaskId");
-        Task task = null;
-        String lastState = "Unknown";
-        try {
-            task = api.getTasksApi().getTask(id);
-        } catch (IOException ex) {
-            logger.error("Error getting task: " + getExceptionMessage(ex));
-            return null;
-        }
-
-        logger.info("Task info:");
-        logger.info("\tId: " + task.getId());
-        logger.info("\tName: " + task.getName());
-        logger.info("\tDesc: " + task.getDescription());
-        logger.info("\tState: " + task.getState());
-        logger.info("\n\nStarting wait...");
-        boolean completed = task.getIsCompleted();
-        while (!completed)
-        {
-            try {
-                task = api.getTasksApi().getTask(id);
-            } catch (IOException ex) {
-                logger.error("Error getting task: " + getExceptionMessage(ex));
-                return null;
-            }
-
-            completed = task.getIsCompleted();
-            lastState = task.getState();
-            logger.info("Task state: " + lastState);
-            if (completed) {
-                break;
-            }
-            try {
-                Thread.sleep(WAIT_TIME + (long)(Math.random() * WAIT_RANDOM_SCALER));
-            } catch (InterruptedException ex) {
-                logger.info("Wait interrupted!");
-                logger.info(getExceptionMessage(ex));
-                completed = true; // bail out of wait loop
-            }
-        }
-        logger.info("Wait complete!");
-        return lastState;
-    }
     /**
      * Descriptor for {@link OctopusDeployDeploymentRecorder}. Used as a singleton.
      * The class is marked as public so that it can be accessed from views.

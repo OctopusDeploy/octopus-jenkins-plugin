@@ -34,7 +34,7 @@ public class OctopusBuildInformationWriter {
             }
 
             FilePath newBuildInfoFile = new FilePath(workspace, buildInformationFile);
-            newBuildInfoFile.write(jsonData, StandardCharsets.UTF_16.toString());
+            newBuildInfoFile.write(jsonData, StandardCharsets.UTF_8.toString());
 
             if (verboseLogging) {
                 log.info("Wrote " + buildInformationFile);

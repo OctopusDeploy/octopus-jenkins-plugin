@@ -8,6 +8,8 @@ import com.octopusdeploy.api.data.*;
 import hudson.*;
 import hudson.FilePath.FileCallable;
 import hudson.model.*;
+import hudson.plugins.octopusdeploy.cli.OctopusCliExecutor;
+import hudson.plugins.octopusdeploy.cli.OctopusCliWrapperBuilder;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
 import hudson.remoting.VirtualChannel;
 import hudson.scm.ChangeLogSet;
@@ -267,66 +269,6 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
 
         checkState(StringUtils.isNotBlank(project), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Project name"));
 
-        final List<String> commands = new ArrayList<>();
-        commands.add(OctoConstants.Commands.CREATE_RELEASE);
-
-        if (StringUtils.isNotBlank(releaseVersion)) {
-            commands.add("--version");
-            commands.add(releaseVersion);
-        }
-
-        if (StringUtils.isNotBlank(channel)) {
-            commands.add("--channel");
-            commands.add(channel);
-        }
-
-        if (StringUtils.isNotBlank(gitRef)) {
-            commands.add("--gitRef");
-            commands.add(gitRef);
-        }
-
-        if (StringUtils.isNotBlank(gitCommit)) {
-            commands.add("--gitCommit");
-            commands.add(gitCommit);
-        }
-
-        if (deployThisRelease && StringUtils.isNotBlank(environment)) {
-            final Iterable<String> environmentNameSplit = Splitter.on(',')
-                    .trimResults()
-                    .omitEmptyStrings()
-                    .split(environment);
-            for(final String env : environmentNameSplit) {
-                commands.add("--deployTo");
-                commands.add(env);
-            }
-
-            if (waitForDeployment) {
-                commands.add("--progress");
-            }
-
-            if (StringUtils.isNotBlank(tenant)) {
-                final Iterable<String> tenantSplit = Splitter.on(',')
-                        .trimResults()
-                        .omitEmptyStrings()
-                        .split(tenant);
-                for(final String t : tenantSplit) {
-                    commands.add("--tenant");
-                    commands.add(t);
-                }
-            }
-
-            if (StringUtils.isNotBlank(tenantTag)) {
-                final Iterable<String> tenantTagsSplit = Splitter.on(',')
-                        .trimResults()
-                        .omitEmptyStrings()
-                        .split(tenantTag);
-                for(final String tag : tenantTagsSplit) {
-                    commands.add("--tenanttag");
-                    commands.add(tag);
-                }
-            }
-        }
-
         // Check packageVersion
         String releaseNotesContent = "";
 
@@ -369,42 +311,80 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
             return;
         }
 
-        if (StringUtils.isNotBlank(releaseNotesContent)) {
-            commands.add("--releaseNotes");
-            commands.add(JSONSanitizer.getInstance().sanitize(releaseNotesContent));
-        }
-
-        if (StringUtils.isNotBlank(defaultPackageVersion)) {
-            commands.add("--defaultPackageVersion");
-            commands.add(defaultPackageVersion);
-        }
-
+        // Prepare package configurations as strings
+        List<String> packageStrings = null;
         if (packageConfigs != null && !packageConfigs.isEmpty()) {
+            packageStrings = new ArrayList<>();
             for (final PackageConfiguration pkg : packageConfigs) {
-                commands.add("--package");
                 if (StringUtils.isNotBlank(pkg.getPackageReferenceName())) {
-                    commands.add(String.format("%s:%s:%s", pkg.getPackageName(), pkg.getPackageReferenceName(), pkg.getPackageVersion()));
+                    packageStrings.add(String.format("%s:%s:%s", pkg.getPackageName(), pkg.getPackageReferenceName(), pkg.getPackageVersion()));
                 } else {
-                    commands.add(String.format("%s:%s", pkg.getPackageName(), pkg.getPackageVersion()));
+                    packageStrings.add(String.format("%s:%s", pkg.getPackageName(), pkg.getPackageVersion()));
                 }
             }
         }
 
+        // Parse variables if deploying
+        List<String> variableCommands = null;
         if (this.deployThisRelease) {
-            commands.addAll(getVariableCommands(run, envInjector, log, variables));
+            variableCommands = getVariableCommands(run, envInjector, log, variables);
             if (run.getResult() == Result.FAILURE) {
                 return;
             }
         }
 
-        commands.addAll(getCommonCommandArguments(envInjector));
+        // Parse environment (can be comma-separated, but wrapper expects single value)
+        String firstEnvironment = null;
+        if (deployThisRelease && StringUtils.isNotBlank(environment)) {
+            final Iterable<String> environmentNameSplit = Splitter.on(',')
+                    .trimResults()
+                    .omitEmptyStrings()
+                    .split(environment);
+            firstEnvironment = environmentNameSplit.iterator().next();
+        }
+
+        // Parse tenant (can be comma-separated, but wrapper expects single value)
+        String firstTenant = null;
+        if (deployThisRelease && StringUtils.isNotBlank(tenant)) {
+            final Iterable<String> tenantSplit = Splitter.on(',')
+                    .trimResults()
+                    .omitEmptyStrings()
+                    .split(tenant);
+            firstTenant = tenantSplit.iterator().next();
+        }
 
         try {
-            final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
-            Result result = launchOcto(workspace, launcher, commands, masks, envVars, listenerAdapter);
+            // Create wrapper
+            OctopusCliExecutor wrapper = new OctopusCliWrapperBuilder(
+                    getToolId(), workspace, launcher, envVars, listenerAdapter)
+                    .serverId(serverId)
+                    .spaceId(spaceId)
+                    .projectName(project)
+                    .verboseLogging(verboseLogging)
+                    .build();
+
+            // Execute create-release command
+            Result result = wrapper.createRelease(
+                    releaseVersion,
+                    channel,
+                    StringUtils.isNotBlank(releaseNotesContent) ? JSONSanitizer.getInstance().sanitize(releaseNotesContent) : null,
+                    defaultPackageVersion,
+                    packageStrings,
+                    gitRef,
+                    gitCommit,
+                    firstEnvironment,
+                    firstTenant,
+                    tenantTag,
+                    variableCommands,
+                    waitForDeployment,
+                    deploymentTimeout,
+                    cancelOnTimeout,
+                    additionalArgs
+            );
+
             success = result.equals(Result.SUCCESS);
             if (success) {
-                AddBuildSummary(run, log, project, releaseVersion, environment, tenant);
+                AddBuildSummary(run, log, project, releaseVersion, firstEnvironment, firstTenant);
             }
         } catch (Exception ex) {
             log.fatal("Failed to create release: " + getExceptionMessage(ex));
@@ -418,7 +398,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
 
     private void AddBuildSummary(@NotNull Run<?, ?> run, Log log, String project, String releaseVersion, String environment, String tenant) {
         try {
-            OctopusDeployServer server = getOctopusDeployServer(serverId);
+            OctopusDeployServer server = OctopusDeployPlugin.getOctopusDeployServer(serverId);
             String serverUrl = server.getUrl();
             if (serverUrl.endsWith("/")) {
                 serverUrl = serverUrl.substring(0, serverUrl.length() - 1);
@@ -490,67 +470,6 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
             }
         }
         log.info("=======================");
-    }
-
-    /**
-     * Gets a package list that is a combination of the default packages (taken from the Octopus template)
-     * and the packages selected. Selected package version overwrite the default package version for a given package
-     * @param projectId
-     * @param selectedPackages
-     * @param defaultPackageVersion
-     * @return A set that combines the default packages and selected packages
-     */
-    private Set<SelectedPackage> getCombinedPackageList(String projectId, List<PackageConfiguration> selectedPackages,
-            String defaultPackageVersion, Log log, EnvironmentVariableValueInjector envInjector)
-    {
-        Set<SelectedPackage> combinedList = new HashSet<>();
-
-        //Get all selected package names for easier lookup later
-        Map<String, SelectedPackage> selectedNames = new HashMap<>();
-        if (selectedPackages != null) {
-            for (PackageConfiguration pkgConfig : selectedPackages) {
-                SelectedPackage sp = new SelectedPackage(envInjector.injectEnvironmentVariableValues(pkgConfig.getPackageName()), null, pkgConfig.getPackageReferenceName(), envInjector.injectEnvironmentVariableValues(pkgConfig.getPackageVersion()));
-                selectedNames.put(envInjector.injectEnvironmentVariableValues(pkgConfig.getPackageName()), sp);
-                combinedList.add(sp);
-            }
-        }
-
-        DeploymentProcessTemplate defaultPackages = null;
-        //If not default version specified, ignore` all default packages
-        try {
-            defaultPackages = getApi().getDeploymentsApi().getDeploymentProcessTemplateForProject(projectId);
-        } catch (Exception ex) {
-            //Default package retrieval unsuccessful
-            log.info(String.format("Could not retrieve default package list for project id: %s. No default packages will be used", projectId));
-        }
-
-        if (defaultPackages != null) {
-            for (SelectedPackage selPkg : defaultPackages.getSteps()) {
-                String stepName = selPkg.getStepName();
-                String packageId = selPkg.getPackageId();
-                String packageReferenceName = selPkg.getPackageReferenceName();
-
-                //Only add if it was not a selected package
-                if (!selectedNames.containsKey(stepName)) {
-                    //If packageId specified replace by stepName retrieved from DeploymentProcessTemplate
-                    //Emulates same behaviour as octo.client project https://octopus.com/docs/api-and-integration/octo.exe-command-line/creating-releases
-                    if (selectedNames.containsKey(packageId)) {
-                        SelectedPackage sc = selectedNames.get(packageId);
-                        sc.setStepName(stepName);
-                    } else {
-                        //Get the default version, if not specified, warn
-                        if (defaultPackageVersion != null && !defaultPackageVersion.isEmpty()) {
-                            combinedList.add(new SelectedPackage(stepName, null, packageReferenceName, defaultPackageVersion));
-                            log.info(String.format("Using default version (%s) of package %s", defaultPackageVersion, stepName));
-                        } else {
-                            log.error(String.format("Required package %s not included because package is not in Package Configuration list and no default package version defined", stepName));
-                        }
-                    }
-                }
-            }
-        }
-
-        return combinedList;
     }
 
     /**
@@ -815,7 +734,6 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
             }
             return names;
         }
-
 
         /**
          * Data binding that returns all possible tenant names to be used in the tenant autocomplete.

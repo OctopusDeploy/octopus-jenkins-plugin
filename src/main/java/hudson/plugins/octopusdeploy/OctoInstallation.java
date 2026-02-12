@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 
 public class OctoInstallation extends ToolInstallation implements NodeSpecific<OctoInstallation>, EnvironmentSpecific<OctoInstallation> {
-
     public static transient final String DEFAULT = "Default";
 
     private static final long serialVersionUID = 1;
@@ -45,6 +44,7 @@ public class OctoInstallation extends ToolInstallation implements NodeSpecific<O
     public OctoInstallation forNode(@NonNull Node node, TaskListener log) throws IOException, InterruptedException {
         return new OctoInstallation(getName(), translateFor(node, log));
     }
+
     @Override
     public OctoInstallation forEnvironment(EnvVars environment) {
         return new OctoInstallation(getName(), environment.expand(getHome()));
@@ -65,16 +65,20 @@ public class OctoInstallation extends ToolInstallation implements NodeSpecific<O
             } catch (Exception e) {
                 taskListener.getLogger().println("Failed to resolve octo path on node");
             }
-        }
-        else if (env != null) {
+        } else if (env != null) {
             octo = this.forEnvironment(env);
         }
 
         return octo.getHome();
     }
 
+    public static String getOctopusToolPath(String name, Node builtOn, EnvVars env, TaskListener taskListener) {
+        DescriptorImpl descriptor = OctoInstallation.getDescriptorOrDie();
+        return descriptor.getInstallation(name).getPathToOctoExe(builtOn, env, taskListener);
+    }
+
     public static OctoInstallation getDefaultInstallation() {
-        DescriptorImpl octoTools = JenkinsHelpers.getJenkins().getDescriptorByType(OctoInstallation.DescriptorImpl.class);
+        DescriptorImpl octoTools = OctoInstallation.getDescriptorOrDie();
         OctoInstallation tool = octoTools.getInstallation(OctoInstallation.DEFAULT);
         if (tool != null) {
             return tool;
@@ -91,20 +95,23 @@ public class OctoInstallation extends ToolInstallation implements NodeSpecific<O
 
     @Initializer(after = InitMilestone.EXTENSIONS_AUGMENTED)
     public static void onLoaded() {
-        DescriptorImpl descriptor = (OctoInstallation.DescriptorImpl) JenkinsHelpers.getJenkins().getDescriptor(OctoInstallation.class);
-        assert descriptor != null;
+        DescriptorImpl descriptor = OctoInstallation.getDescriptorOrDie();
         OctoInstallation[] installations = descriptor.getInstallations();
         if (installations != null && installations.length > 0) {
             return;
         }
-        String defaultOctoExe = isWindows() ? "Octo.exe" : "Octo";
-        OctoInstallation tool = new OctoInstallation(DEFAULT, defaultOctoExe);
+        String defaultBinary = isWindows() ? "Octo.exe" : "Octo";
+        OctoInstallation tool = new OctoInstallation(DEFAULT, defaultBinary);
         descriptor.setInstallations(tool);
         descriptor.save();
     }
 
     @Override
     public DescriptorImpl getDescriptor() {
+        return OctoInstallation.getDescriptorOrDie();
+    }
+
+    private static DescriptorImpl getDescriptorOrDie() {
         return (DescriptorImpl) JenkinsHelpers.getJenkins().getDescriptorOrDie(OctoInstallation.class);
     }
 
@@ -112,10 +119,8 @@ public class OctoInstallation extends ToolInstallation implements NodeSpecific<O
         return File.pathSeparatorChar == ';';
     }
 
-
     @Extension
     public static class DescriptorImpl extends ToolDescriptor<OctoInstallation> {
-
         public DescriptorImpl() {
             super();
             load();
