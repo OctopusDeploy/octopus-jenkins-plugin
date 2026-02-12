@@ -49,6 +49,7 @@ jobs:
           versionSpec: "5.x"
 
       - name: Call GitVersion
+        id: gitversion
         uses: gittools/actions/gitversion/execute@v3
 
       - name: Determine Version
@@ -56,11 +57,11 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" == "schedule" ]
           then
-            echo "nuGetVersion=${GITVERSION_MAJORMINORPATCH}-nightly-${{ github.run_number }}" >> $GITHUB_OUTPUT
-            echo "Version: ${GITVERSION_MAJORMINORPATCH}-nightly-${{ github.run_number }}"
+            echo "nuGetVersion=${{ steps.gitversion.outputs.majorMinorPatch }}-nightly-${{ github.run_number }}" >> $GITHUB_OUTPUT
+            echo "Version: ${{ steps.gitversion.outputs.majorMinorPatch }}-nightly-${{ github.run_number }}"
           else
-            echo "nuGetVersion=${GITVERSION_FULLSEMVER}" >> $GITHUB_OUTPUT
-            echo "Version: ${GITVERSION_FULLSEMVER}"
+            echo "nuGetVersion=${{ steps.gitversion.outputs.fullSemVer }}" >> $GITHUB_OUTPUT
+            echo "Version: ${{ steps.gitversion.outputs.fullSemVer }}"
           fi
 
       - name: Install Octopus CLI
