@@ -70,7 +70,7 @@ jobs:
 
       - name: Set Octo CLI Path
         id: cli-path
-        run: echo "install-path=$(which octo)" >> $GITHUB_OUTPUT
+        run: echo "install-path=$(which octopus)" >> $GITHUB_OUTPUT
 
       - name: Setup JDK11
         uses: actions/setup-java@v5
