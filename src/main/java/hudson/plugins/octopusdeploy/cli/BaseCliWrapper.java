@@ -92,6 +92,18 @@ public abstract class BaseCliWrapper implements OctopusCliExecutor {
 
         // Launch process
         environment.put("OCTOEXTENSION", "");
+        
+        // Set Octopus CLI environment variables so they don't rely on config file
+        if (StringUtils.isNotBlank(serverUrl)) {
+            environment.put("OCTOPUS_URL", serverUrl);
+        }
+        if (StringUtils.isNotBlank(apiKey)) {
+            environment.put("OCTOPUS_API_KEY", apiKey);
+        }
+        if (StringUtils.isNotBlank(spaceId)) {
+            environment.put("OCTOPUS_SPACE", spaceId);
+        }
+        
         Proc process = launcher.launch()
                 .cmds(cmdArgs)
                 .masks(masks)
