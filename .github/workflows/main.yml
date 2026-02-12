@@ -146,13 +146,22 @@ jobs:
           echo "api-key=$API_KEY" >> $GITHUB_OUTPUT
 
       - name: Build, Execute Unit Tests & E2E Tests
-        run: ./gradlew build test -Pversion=${{ steps.git-version.outputs.nugetVersion }}
+        run: ./gradlew build test -Pversion=${{ steps.git-version.outputs.nugetVersion }} --info
         env:
           OCTOPUS_SDK_AT_USE_EXISTING_SERVER: true
           OCTOPUS_CLI_PATH: ${{ steps.cli-path.outputs.install-path }}
           OCTOPUS_SERVER_URL: http://localhost:8080
           OCTOPUS_SERVER_API_KEY: ${{ steps.get-api-key.outputs.api-key }}
           OCTOPUS_LICENSE: ${{ secrets.OCTOPUS_SERVER_BASE64_LICENSE }}
+
+      - name: Upload Test Reports
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: test-reports
+          path: |
+            build/reports/tests/
+            build/test-results/
 
       - name: Execute Integration Tests
         run: ./gradlew integrationTest -Pversion=${{ steps.git-version.outputs.nugetVersion }}
