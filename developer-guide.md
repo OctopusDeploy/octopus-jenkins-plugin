@@ -7,24 +7,19 @@ The following guide will briefly outline how to get started using an Ubuntu base
 This project is in the process of being migrated over to the Gradle build system, in the interim this guide will contain instructions for development using either Maven *or* Gradle
 
 ## Fundamentals
-The Jenkins Octopus plugin currently requires **Java 8** and a locally installed version of **Octo CLI**
+The Jenkins Octopus plugin currently requires **Java 11** and a locally installed version of [Octopus CLI](https://github.com/OctopusDeploy/cli)
 
 ## Environment Setup
 ### Ubuntu
 1. Install Java
-> sudo apt install openjdk-8-jdk
-2. Install dotnet
->  sudo snap install dotnet-sdk
-3. Install Octo CLI
-> dotnet tool install Octopus.DotNet.Cli --global
+> sudo apt install openjdk-11-jdk
+2. [Install Octopus CLI](https://github.com/OctopusDeploy/cli?tab=readme-ov-file#installation)
 
 ### Windows
-1. Download [OpenJDK 8 LTS](https://adoptopenjdk.net/) and install to a location of your choosing
+1. Download [OpenJDK 11 LTS](https://adoptopenjdk.net/) and install to a location of your choosing
 2. Set the `JAVA_HOME` environment variable to the root directory of the JDK installation
 3. Ensure `%JAVA_HOME%\bin` is added to your path
-4. [Download](https://dotnet.microsoft.com/download) and install the latest dotnet
-5. Install Octo CLI
-> dotnet tool install Octopus.DotNet.Cli --global
+4. [Install Octopus CLI](https://github.com/OctopusDeploy/cli?tab=readme-ov-file#installation)
 
 # Build and run the plugin locally
 Clone this repository locally with Git:
@@ -124,7 +119,7 @@ For most changes the version number is self-managed by the build process. If you
 **Please note**: The [plugin repository](https://plugins.jenkins.io/) can take several days before the new version shows on the [download page](https://plugins.jenkins.io/octopusdeploy/). Be patient.
 
 # Inside Jenkins
-## Configure Octo CLI
+## Configure Octopus CLI
 In the Jenkins version set at the minimum for the plugin, the CLI configuration is found under
 > Manage Jenkins > Global Tool Configuration
 
