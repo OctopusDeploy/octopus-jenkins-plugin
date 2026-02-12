@@ -91,6 +91,24 @@ spotless {
 
 test {
   useJUnitPlatform()
+  
+  // Pass required environment variables to test JVM
+  environment "OCTOPUS_SDK_AT_USE_EXISTING_SERVER", System.getenv("OCTOPUS_SDK_AT_USE_EXISTING_SERVER")
+  environment "OCTOPUS_SERVER_URL", System.getenv("OCTOPUS_SERVER_URL")
+  environment "OCTOPUS_SERVER_API_KEY", System.getenv("OCTOPUS_SERVER_API_KEY")
+  environment "OCTOPUS_CLI_PATH", System.getenv("OCTOPUS_CLI_PATH")
+  environment "OCTOPUS_LICENSE", System.getenv("OCTOPUS_LICENSE")
+  
+  // Debug: Print environment variable status (not values to avoid leaking secrets)
+  doFirst {
+    println "=== Test Environment Variables Status ==="
+    println "OCTOPUS_SERVER_URL: ${environment['OCTOPUS_SERVER_URL'] ? 'SET (length: ' + environment['OCTOPUS_SERVER_URL'].length() + ')' : 'NOT SET'}"
+    println "OCTOPUS_CLI_PATH: ${environment['OCTOPUS_CLI_PATH'] ? 'SET (length: ' + environment['OCTOPUS_CLI_PATH'].length() + ')' : 'NOT SET'}"
+    println "OCTOPUS_SDK_AT_USE_EXISTING_SERVER: ${environment['OCTOPUS_SDK_AT_USE_EXISTING_SERVER'] ? 'SET (value: ' + environment['OCTOPUS_SDK_AT_USE_EXISTING_SERVER'] + ')' : 'NOT SET'}"
+    println "OCTOPUS_SERVER_API_KEY: ${environment['OCTOPUS_SERVER_API_KEY'] ? 'SET (length: ' + environment['OCTOPUS_SERVER_API_KEY'].length() + ')' : 'NOT SET'}"
+    println "OCTOPUS_LICENSE: ${environment['OCTOPUS_LICENSE'] ? 'SET (length: ' + environment['OCTOPUS_LICENSE'].length() + ')' : 'NOT SET'}"
+    println "=========================================="
+  }
 }
 
 if (file('src/integration-test').directory) {
