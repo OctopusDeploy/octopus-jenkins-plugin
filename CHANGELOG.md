@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.1.0](https://github.com/OctopusDeploy/octopus-jenkins-plugin/compare/v4.0.2...v4.1.0) (2026-02-12)
+
+
+### Features
+
+* Update Jenkins integration to use the latest Octopus CLI ([#161](https://github.com/OctopusDeploy/octopus-jenkins-plugin/issues/161)) ([1351927](https://github.com/OctopusDeploy/octopus-jenkins-plugin/commit/1351927d3873e47815267f795fc6fcc65826acbb))
+
 ## [4.0.2](https://github.com/OctopusDeploy/octopus-jenkins-plugin/compare/v4.0.1...v4.0.2) (2025-04-04)
 
 
