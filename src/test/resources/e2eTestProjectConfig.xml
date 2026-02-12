@@ -39,7 +39,7 @@
         <hudson.plugins.octopusdeploy.OctopusDeployPushBuildInformationRecorder plugin="octopusdeploy">
             <serverId>TestServer</serverId>
             <toolId>Default</toolId>
-            <spaceId/>
+            <spaceId>Spaces-1</spaceId>
             <additionalArgs/>
             <waitForDeployment>false</waitForDeployment>
             <verboseLogging>false</verboseLogging>
