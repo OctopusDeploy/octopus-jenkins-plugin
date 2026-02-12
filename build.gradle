@@ -91,6 +91,11 @@ spotless {
 
 test {
   useJUnitPlatform()
+  environment "OCTOPUS_SDK_AT_USE_EXISTING_SERVER", System.getenv("OCTOPUS_SDK_AT_USE_EXISTING_SERVER")
+  environment "OCTOPUS_SERVER_URL", System.getenv("OCTOPUS_SERVER_URL")
+  environment "OCTOPUS_SERVER_API_KEY", System.getenv("OCTOPUS_SERVER_API_KEY")
+  environment "OCTOPUS_CLI_PATH", System.getenv("OCTOPUS_CLI_PATH")
+  environment "OCTOPUS_LICENSE", System.getenv("OCTOPUS_LICENSE")
 }
 
 if (file('src/integration-test').directory) {
