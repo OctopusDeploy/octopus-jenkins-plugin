@@ -318,7 +318,7 @@ public class CliWrapper extends BaseCliWrapper {
             return createResult.toResult();
         }
 
-        if (StringUtils.isBlank(deployToEnvironment)) {
+        if (StringUtils.isNotBlank(deployToEnvironment)) {
             if (StringUtils.isBlank(version)) {
                 String stdout = createResult.getStdout();
                 JSONObject json = (JSONObject) JSONSerializer.toJSON(stdout);
