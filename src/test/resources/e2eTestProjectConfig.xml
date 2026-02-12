@@ -34,7 +34,7 @@
             <verboseLogging>false</verboseLogging>
             <cancelOnTimeout>false</cancelOnTimeout>
             <packagePaths>**/*.zip</packagePaths>
-            <overwriteMode>OverwriteExisting</overwriteMode>
+            <overwriteMode>FailIfExists</overwriteMode>
         </hudson.plugins.octopusdeploy.OctopusDeployPushRecorder>
         <hudson.plugins.octopusdeploy.OctopusDeployPushBuildInformationRecorder plugin="octopusdeploy">
             <serverId>TestServer</serverId>
@@ -47,7 +47,7 @@
             <packageId>PackageId</packageId>
             <packageVersion>1.0.0</packageVersion>
             <commentParser>GitHub</commentParser>
-            <overwriteMode>OverwriteExisting</overwriteMode>
+            <overwriteMode>FailIfExists</overwriteMode>
         </hudson.plugins.octopusdeploy.OctopusDeployPushBuildInformationRecorder>
     </builders>
     <publishers/>
