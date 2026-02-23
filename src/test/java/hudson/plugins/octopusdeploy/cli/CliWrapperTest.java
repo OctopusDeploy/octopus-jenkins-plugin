@@ -346,8 +346,6 @@ public class CliWrapperTest {
         // Get the first call (login command)
         List<List<String>> allArgs = argsCaptor.getAllValues();
         List<String> loginArgs = allArgs.get(0);
-        int apiKeyIndex = loginArgs.indexOf("--api-key") + 1; // API key value is after the --apiKey flag
-
 
         // Get the first call (login command) and verify API key is masked
         List<Set<Integer>> allMasked = maskedCaptor.getAllValues();
@@ -355,7 +353,8 @@ public class CliWrapperTest {
 
         // The login command masks the API key position
         assertThat(loginMasked).isNotEmpty();
-        assertThat(loginMasked).contains(apiKeyIndex + 1); // +1 because the binary path is added at the start of the args list, so it shifts the indices by 1
+        Integer[] loginMaskedArray = loginMasked.toArray(new Integer[0]);
+        assertThat(loginArgs.get(loginMaskedArray[0] - 1)).isEqualTo("API-KEY123");
     }
 
     @Test

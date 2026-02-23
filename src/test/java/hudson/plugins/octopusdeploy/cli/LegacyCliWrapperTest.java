@@ -335,18 +335,23 @@ public class LegacyCliWrapperTest {
     public void execute_isMaskedForApiKey() throws IOException, InterruptedException {
         // Arrange
         @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<String>> argsCaptor = ArgumentCaptor.forClass(List.class);
+        @SuppressWarnings("unchecked")
         ArgumentCaptor<Set<Integer>> maskedCaptor = ArgumentCaptor.forClass(Set.class);
 
         // Act
         cliWrapper.pack("TestPackage", null, null, null, null, null, false, null);
 
         // Assert
-        verify(cliWrapper, times(1)).execute(anyList(), maskedCaptor.capture());
+        verify(cliWrapper, times(1)).execute(argsCaptor.capture(), maskedCaptor.capture());
 
+        List<String> allArgs = argsCaptor.getValue();
         Set<Integer> maskedIndices = maskedCaptor.getValue();
 
         // The API key position should be masked
         assertThat(maskedIndices).isNotEmpty();
+        Integer[] loginMaskedArray = maskedIndices.toArray(new Integer[0]);
+        assertThat(allArgs.get(loginMaskedArray[0] - 1)).isEqualTo("API-KEY123");
     }
 
     @Test
