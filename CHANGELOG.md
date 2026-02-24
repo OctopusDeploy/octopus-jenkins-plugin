@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.1.1](https://github.com/OctopusDeploy/octopus-jenkins-plugin/compare/v4.1.0...v4.1.1) (2026-02-24)
+
+
+### Bug Fixes
+
+* correct masking index for API key in LegacyCliWrapper ([#164](https://github.com/OctopusDeploy/octopus-jenkins-plugin/issues/164)) ([a6af375](https://github.com/OctopusDeploy/octopus-jenkins-plugin/commit/a6af375c89cade1790ce76c7b37a91170a65a7da))
+
 ## [4.1.0](https://github.com/OctopusDeploy/octopus-jenkins-plugin/compare/v4.0.2...v4.1.0) (2026-02-12)
 
 
