@@ -334,8 +334,9 @@ public class LegacyCliWrapper extends BaseCliWrapper {
         // API Key (masked)
         if (StringUtils.isNotBlank(apiKey)) {
             args.add(OctoConstants.Commands.Arguments.API_KEY);
-            maskedIndices.add(args.size()); // Mask the next value
             args.add(apiKey);
+            maskedIndices.add(args.size()); // size is +1 of the apiKey index, but later we also add the binary path at
+                                            // the start of the args list, so it works out
         }
 
         // Space
