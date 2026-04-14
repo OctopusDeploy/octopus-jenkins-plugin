@@ -293,7 +293,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
         if (releaseNotes) {
             if (isReleaseNotesSourceFile()) {
                 try {
-                    releaseNotesContent += getReleaseNotesFromFile(workspace, releaseNotesFile, log);
+                    releaseNotesContent += getReleaseNotesFromFile(workspace, releaseNotesFile);
                 } catch (Exception ex) {
                     log.fatal(String.format("Unable to get file contents from release notes file! - %s", getExceptionMessage(ex)));
                     success = false;
@@ -479,32 +479,18 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
      * @throws IOException if there was a file read io problem
      * @throws InterruptedException if the action for reading was interrupted
      */
-    private String getReleaseNotesFromFile(FilePath workspace, String releaseNotesFilename, Log log) throws IOException, InterruptedException {
+    private String getReleaseNotesFromFile(FilePath workspace, String releaseNotesFilename) throws IOException, InterruptedException {
         FilePath path = new FilePath(workspace, releaseNotesFilename);
-        return path.act(new ReadFileCallable(log));
+        return path.act(new ReadFileCallable());
     }
 
     /**
      * This callable allows us to read files from other nodes - ie. Jenkins slaves.
      */
     private static final class ReadFileCallable implements FileCallable<String> {
-        public final static String ERROR_READING = "<Error Reading File>";
-
-        private final Log log;
-
-        public ReadFileCallable(Log log)
-        {
-            this.log = log;
-        }
-
         @Override
-        public String invoke(File f, VirtualChannel channel) {
-            try {
-                return StringUtils.join(Files.readAllLines(f.toPath(), StandardCharsets.UTF_8), "\n");
-            } catch (IOException ex) {
-                log.error("Failed to read file: " + getExceptionMessage(ex));
-                return ERROR_READING;
-            }
+        public String invoke(File f, VirtualChannel channel) throws IOException {
+            return StringUtils.join(Files.readAllLines(f.toPath(), StandardCharsets.UTF_8), "\n");
         }
 
         @Override
