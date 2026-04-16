@@ -295,7 +295,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
                 try {
                     releaseNotesContent += getReleaseNotesFromFile(workspace, releaseNotesFile);
                 } catch (Exception ex) {
-                    log.fatal(String.format("Unable to get file contents from release notes file! - %s", getExceptionMessage(ex)));
+                    log.fatal(String.format("Unable to get file contents from release notes file '%s'! - %s", releaseNotesFile, getExceptionMessage(ex)));
                     success = false;
                 }
             } else if (isReleaseNotesSourceScm()) {
@@ -475,6 +475,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
     /**
      * Return the release notes contents from a file.
      * @param workspace our build
+     * @param releaseNotesFilename the name of the file that contains the release notes
      * @return string contents of file
      * @throws IOException if there was a file read io problem
      * @throws InterruptedException if the action for reading was interrupted
