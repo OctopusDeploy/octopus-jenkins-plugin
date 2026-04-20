@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.1.2](https://github.com/OctopusDeploy/octopus-jenkins-plugin/compare/v4.1.1...v4.1.2) (2026-04-20)
+
+
+### Bug Fixes
+
+* Simplify how release notes are read from a file by removing error-swallowing behavior ([5048152](https://github.com/OctopusDeploy/octopus-jenkins-plugin/commit/504815228210c4d2356722f4dab3065ab2bd1c16))
+
 ## [4.1.1](https://github.com/OctopusDeploy/octopus-jenkins-plugin/compare/v4.1.0...v4.1.1) (2026-02-24)
 
 
