@@ -149,20 +149,6 @@ jobs:
           API_KEY=$(echo "$API_KEY_RESPONSE" | grep -o '"ApiKey": *"[^"]*"' | sed 's/"ApiKey": *"\([^"]*\)"/\1/')
           echo "api-key=$API_KEY" >> $GITHUB_OUTPUT
 
-      - name: Disable API Rate Limiting
-        run: |
-          API_KEY="${{ steps.get-api-key.outputs.api-key }}"
-          POLICIES=$(curl -s -H "X-Octopus-ApiKey: $API_KEY" http://localhost:8080/api/ratelimitingpolicies)
-          for id in $(echo "$POLICIES" | jq -r '.Items[]?.Id'); do
-            echo "$POLICIES" \
-              | jq -c --arg id "$id" '.Items[] | select(.Id == $id) | .IsEnabled = false' \
-              | curl -sS -f -X PUT \
-                  -H "X-Octopus-ApiKey: $API_KEY" \
-                  -H "Content-Type: application/json" \
-                  --data @- "http://localhost:8080/api/ratelimitingpolicies/$id" \
-              | jq -r '"disabled rate limiting policy: \(.Name)"'
-          done
-
       - name: Build, Execute Unit Tests & E2E Tests
         run: ./gradlew build test -Pversion=${{ steps.git-version.outputs.nugetVersion }}
         env:
