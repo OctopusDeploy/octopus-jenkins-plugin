@@ -157,6 +157,13 @@ jobs:
           OCTOPUS_SERVER_API_KEY: ${{ steps.get-api-key.outputs.api-key }}
           OCTOPUS_LICENSE: ${{ secrets.OCTOPUS_SERVER_BASE64_LICENSE }}
 
+      - name: Execute Integration Tests
+        run: ./gradlew integrationTest -Pversion=${{ steps.git-version.outputs.nugetVersion }}
+        env:
+          OCTOPUS_SDK_AT_USE_EXISTING_SERVER: true
+          OCTOPUS_SERVER_URL: http://localhost:8080
+          OCTOPUS_SERVER_API_KEY: ${{ steps.get-api-key.outputs.api-key }}
+
       - name: Upload Test Reports
         if: failure()
         uses: actions/upload-artifact@v6
@@ -166,12 +173,21 @@ jobs:
             build/reports/tests/
             build/test-results/
 
-      - name: Execute Integration Tests
-        run: ./gradlew integrationTest -Pversion=${{ steps.git-version.outputs.nugetVersion }}
-        env:
-          OCTOPUS_SDK_AT_USE_EXISTING_SERVER: true
-          OCTOPUS_SERVER_URL: http://localhost:8080
-          OCTOPUS_SERVER_API_KEY: ${{ steps.get-api-key.outputs.api-key }}
+      - name: Dump Octopus Server Diagnostics
+        if: failure()
+        run: |
+          API_KEY="${{ steps.get-api-key.outputs.api-key }}"
+          octopus_api() {
+            curl -s -H "X-Octopus-ApiKey: $API_KEY" "http://localhost:8080$1" | (jq . 2>/dev/null || cat) || true
+          }
+          echo "=== Server version ==="
+          octopus_api /api | jq -r '.Version' 2>/dev/null || true
+          echo "=== Spaces ==="
+          octopus_api "/api/spaces?take=200" | jq -r '"TotalResults: \(.TotalResults)", (.Items[]? | "  \(.Name) taskQueueStopped=\(.TaskQueueStopped)")' 2>/dev/null || true
+          echo "=== License status ==="
+          octopus_api /api/licenses/licenses-current/status
+          echo "=== Server log ==="
+          docker logs --tail 500 octopus-server || true
 
       - name: Create Plugin Zip
         id: create-package
