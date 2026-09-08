@@ -7,7 +7,7 @@ import java.util.Properties;
 import java.util.Set;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 public class VariablesApi {
     private final AuthenticatedWebClient webClient;

@@ -12,7 +12,7 @@ import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
@@ -232,7 +232,7 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
             exceptionMessage = ex.toString();
         }
 
-        String stackTrace = ExceptionUtils.getFullStackTrace(ex);
+        String stackTrace = ExceptionUtils.getStackTrace(ex);
         return exceptionMessage + "\n" + stackTrace;
     }
 

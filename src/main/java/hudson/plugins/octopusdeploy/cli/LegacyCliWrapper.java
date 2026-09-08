@@ -6,7 +6,7 @@ import hudson.Launcher;
 import hudson.model.Result;
 import hudson.model.TaskListener;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tools.ant.types.Commandline;
 
 import java.io.IOException;

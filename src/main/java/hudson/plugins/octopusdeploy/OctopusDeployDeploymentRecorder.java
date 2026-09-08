@@ -19,7 +19,7 @@ import java.util.logging.Logger;
 
 import jenkins.util.BuildListenerAdapter;
 import net.sf.json.*;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jenkinsci.Symbol;
 import org.jetbrains.annotations.NotNull;
 import org.kohsuke.stapler.*;

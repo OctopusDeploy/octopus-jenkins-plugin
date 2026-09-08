@@ -5,7 +5,7 @@ import hudson.plugins.octopusdeploy.Log;
 import hudson.plugins.octopusdeploy.exception.ResourceException;
 import hudson.plugins.octopusdeploy.services.FileService;
 import hudson.remoting.VirtualChannel;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jenkinsci.remoting.RoleChecker;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;

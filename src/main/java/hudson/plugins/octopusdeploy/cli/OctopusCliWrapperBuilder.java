@@ -10,7 +10,7 @@ import hudson.plugins.octopusdeploy.OctopusDeployPlugin;
 import hudson.plugins.octopusdeploy.OctopusDeployServer;
 import hudson.plugins.octopusdeploy.OctoInstallation;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import java.util.*;
 import java.io.IOException;
 
