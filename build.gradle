@@ -92,6 +92,12 @@ spotless {
 
 test {
   useJUnitPlatform()
+  testLogging {
+    events 'failed'
+    exceptionFormat 'full'
+    showCauses true
+    showStackTraces true
+  }
 }
 
 if (file('src/integration-test').directory) {
@@ -114,5 +120,11 @@ if (file('src/integration-test').directory) {
     testClassesDirs = sourceSets.integrationTest.output.classesDirs
     classpath = sourceSets.integrationTest.runtimeClasspath
     outputs.upToDateWhen { false }
+    testLogging {
+      events 'failed'
+      exceptionFormat 'full'
+      showCauses true
+      showStackTraces true
+    }
   }
 }
