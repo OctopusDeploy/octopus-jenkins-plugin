@@ -29,6 +29,7 @@ configurations {
 
 dependencies {
   implementation libs.apache.commons.collections4
+  implementation libs.apache.commons.lang3
   implementation libs.google.gson
   implementation libs.jenkins.workflow
   compileOnly libs.jetbrains.annotations

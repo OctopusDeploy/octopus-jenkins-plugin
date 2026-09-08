@@ -11,8 +11,8 @@ import hudson.plugins.octopusdeploy.Log;
 import hudson.plugins.octopusdeploy.OctoInstallation;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
 import jenkins.util.BuildListenerAdapter;
-import org.apache.commons.lang.ArrayUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

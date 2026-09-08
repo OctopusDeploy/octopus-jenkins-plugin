@@ -9,7 +9,7 @@ import hudson.plugins.octopusdeploy.constants.OctoConstants;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tools.ant.types.Commandline;
 
 import java.io.IOException;
