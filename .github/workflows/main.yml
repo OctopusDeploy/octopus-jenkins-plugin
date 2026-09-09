@@ -67,9 +67,7 @@ jobs:
       - name: Install Octopus CLI
         uses: OctopusDeploy/install-octopus-cli-action@v4
         with:
-          # Pinned: CLI 2.22.0+ panics on `login --ignore-ssl-errors`
-          # (OctopusDeploy/cli login.go type-asserts the RoundTripper).
-          version: 2.21.4
+          version: latest
 
       - name: Set Octo CLI Path
         id: cli-path
