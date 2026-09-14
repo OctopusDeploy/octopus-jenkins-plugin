@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.1.3](https://github.com/OctopusDeploy/octopus-jenkins-plugin/compare/v4.1.2...v4.1.3) (2026-09-09)
+
+
+### Bug Fixes
+
+* Add Commons Lang 3 as dependency ([af1e87d](https://github.com/OctopusDeploy/octopus-jenkins-plugin/commit/af1e87d0aab985e36e7a9f4163bb1b6ffb81ae4f))
+
 ## [4.1.2](https://github.com/OctopusDeploy/octopus-jenkins-plugin/compare/v4.1.1...v4.1.2) (2026-04-20)
 
 
